@@ -20,6 +20,9 @@ component {
 			}
 		}
 	  	
+	  	
+		//variables.nounForms = CreateObject("component", "singularPluralNounForm").init();
+						
 	  	variables.apos = "'";
 	  	variables.quot = '"';
 	
@@ -844,8 +847,8 @@ component {
 	
 				switch(variables.tableColumns.type_name[i]) {
 					case "bit":
-					retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="#variables.tableColumns.column_name[i]#" type="radio" value="1" class="pure-radio"/> True' & chr(10);
-					retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="#variables.tableColumns.column_name[i]#" type="radio" value="0" class="pure-radio"/> False' & chr(10);
+					retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="#variables.tableColumns.column_name[i]#" type="radio" value="1"/> True' & chr(10);
+					retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="#variables.tableColumns.column_name[i]#" type="radio" value="0"/> False' & chr(10);
 					break;
 										
 					case "char": case "nchar": case "varchar": case "varchar(max)": case "nvarchar": case "text": case "ntext":
@@ -994,8 +997,8 @@ component {
 	
 				switch(variables.tableColumns.type_name[i]) {
 					case "bit":
-					retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="#variables.tableColumns.column_name[i]#" type="radio" value="1" class="pure-radio" <cfif ##rc.#variables.table#Bean.get#capitalizeString(variables.tableColumns.column_name[i])#()## eq 1>checked="checked"</cfif>/> True' & chr(10);
-					retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="#variables.tableColumns.column_name[i]#" type="radio" value="0" class="pure-radio" <cfif ##rc.#variables.table#Bean.get#capitalizeString(variables.tableColumns.column_name[i])#()## eq 0>checked="checked"</cfif>/> False' & chr(10);
+					retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="#variables.tableColumns.column_name[i]#" type="radio" value="1" <cfif ##rc.#variables.table#Bean.get#capitalizeString(variables.tableColumns.column_name[i])#()## eq 1>checked="checked"</cfif>/> True' & chr(10);
+					retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="#variables.tableColumns.column_name[i]#" type="radio" value="0" <cfif ##rc.#variables.table#Bean.get#capitalizeString(variables.tableColumns.column_name[i])#()## eq 0>checked="checked"</cfif>/> False' & chr(10);
 					break;
 					
 					case "char": case "nchar": case "varchar": case "varchar(max)": case "nvarchar": case "text": case "ntext":
@@ -1284,8 +1287,8 @@ component {
 	
 				switch(variables.tableColumns.type_name[i]) {
 					case "bit":
-					retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="#variables.tableColumns.column_name[i]#" type="radio" value="1" class="pure-radio" <cfif ##rc.#variables.table#Bean.get#capitalizeString(variables.tableColumns.column_name[i])#()## eq 1>checked="checked"</cfif>/> True' & chr(10);
-					retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="#variables.tableColumns.column_name[i]#" type="radio" value="0" class="pure-radio" <cfif ##rc.#variables.table#Bean.get#capitalizeString(variables.tableColumns.column_name[i])#()## eq 0>checked="checked"</cfif>/> False' & chr(10);
+					retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="#variables.tableColumns.column_name[i]#" type="radio" value="1" <cfif ##rc.#variables.table#Bean.get#capitalizeString(variables.tableColumns.column_name[i])#()## eq 1>checked="checked"</cfif>/> True' & chr(10);
+					retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="#variables.tableColumns.column_name[i]#" type="radio" value="0" <cfif ##rc.#variables.table#Bean.get#capitalizeString(variables.tableColumns.column_name[i])#()## eq 0>checked="checked"</cfif>/> False' & chr(10);
 					break;
 					
 					case "char": case "nchar": case "varchar": case "varchar(max)": case "nvarchar": case "text": case "ntext":
