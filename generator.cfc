@@ -619,11 +619,11 @@ component {
 		for(i=1;i<=variables.tableColumns.recordCount;i++) {
 			if(variables.tableColumns.Is_PrimaryKey[i]){
 				switch(variables.tableColumns.type_name[i]) {
-					case "uniqueidentifier": case "guid":
-						dao &= "VARCHAR');" & chr(10);
-						break;
 					case "int": case "integer": case "int identity":
 						dao &= "INTEGER');" & chr(10);
+						break;
+					default:
+						dao &= "VARCHAR');" & chr(10);
 						break;
 				}
 			}
