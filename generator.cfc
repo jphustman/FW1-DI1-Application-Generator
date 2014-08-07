@@ -619,11 +619,47 @@ component {
 		for(i=1;i<=variables.tableColumns.recordCount;i++) {
 			if(variables.tableColumns.Is_PrimaryKey[i]){
 				switch(variables.tableColumns.type_name[i]) {
+					case "bit":
+						dao &= "BIT');" & chr(10);
+						break;
+					case "char": case "nchar": case "uniqueidentifier": case "guid":
+						dao &= "CHAR');" & chr(10);
+						break;
+					case "decimal": case "money": case "smallmoney":
+						dao &= "DECIMAL');" & chr(10);
+						break;
+					case "float":
+						dao &= "FLOAT');" & chr(10);
+						break;
 					case "int": case "integer": case "int identity":
 						dao &= "INTEGER');" & chr(10);
 						break;
+					case "text": case "ntext":
+						dao &= "LONGVARCHAR');" & chr(10);
+						break;
+					case "numeric":
+						dao &= "NUMERIC');" & chr(10);
+						break;
+					case "real":
+						dao &= "REAL');" & chr(10);
+						break;
+					case "smallint":
+						dao &= "SMALLINT');" & chr(10);
+						break;
+					case "date":
+						dao &= "DATE');" & chr(10);
+						break;
+					case "time":
+						dao &= "TIME');" & chr(10);
+						break;
 					case "datetime": case "smalldatetime":
 						dao &= "TIMESTAMP');" & chr(10);
+						break;
+					case "tinyint":
+						dao &= "TINYINT');" & chr(10);
+						break;
+					case "varchar": case "nvarchar":
+						dao &= "VARCHAR');" & chr(10);
 						break;
 					default:
 						dao &= "VARCHAR');" & chr(10);
