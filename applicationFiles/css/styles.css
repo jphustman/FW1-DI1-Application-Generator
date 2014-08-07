@@ -13,3 +13,5 @@ table.dataTable.display tbody tr.even:hover {
 }
 
 th, td { vertical-align:top; text-align:left; }
+
+#main { padding:20px; }

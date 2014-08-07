@@ -22,6 +22,7 @@
 		<button id="showCookies" class="pure-button pure-button-primary">Show Cookies</button> | 
 		<button id="showApplication" class="pure-button pure-button-primary">Show Application</button> | 
 		<button id="showCGI" class="pure-button pure-button-primary">Show CGI</button> | 
+		<button id="showVariables" class="pure-button pure-button-primary">Show Variables</button>
 		<button id="showSystem" class="pure-button pure-button-primary">Show System Functions</button>
 	</div>
 </div>
@@ -52,6 +53,10 @@
 	<div id="CGIPanel">
 		<h1 style="color:#c00;">CGI</h1>
 		<cfdump var="#cgi#">
+	</div>
+	<div id="VariablesPanel">
+		<h1 style="color:#c00;">Variables</h1>
+		<cfdump var="#Variables#">
 	</div>
 	<div id="SystemPanel">
 		<h1 style="color:#c00;">System Functions</h1>
@@ -126,6 +131,7 @@
 				$("#CookiesPanel").hide();
 				$("#RCPanel").hide();
 				$("#CGIPanel").hide();
+				$("#VariablesPanel").hide();
 				$("#SystemPanel").hide();
 			});
 		</cfif>
@@ -134,6 +140,7 @@
 		$("#CookiesPanel").hide();
 		$("#ApplicationPanel").hide();
 		$("#CGIPanel").hide();
+		$("#VariablesPanel").hide();
 		$("#SystemPanel").hide();
 		
 		$("#showApplication").click(function(){
@@ -143,6 +150,7 @@
 			$("#CookiesPanel").hide();
 			$("#RCPanel").hide();
 			$("#CGIPanel").hide();
+			$("#VariablesPanel").hide();
 			$("#SystemPanel").hide();
 		});
 		
@@ -153,6 +161,7 @@
 			$("#CookiesPanel").hide();
 			$("#RCPanel").hide();
 			$("#CGIPanel").hide();
+			$("#VariablesPanel").hide();
 			$("#SystemPanel").hide();
 		});
 		
@@ -163,6 +172,7 @@
 			$("#SessionPanel").hide();
 			$("#RCPanel").hide();
 			$("#CGIPanel").hide();
+			$("#VariablesPanel").hide();
 			$("#SystemPanel").hide();
 		});
 		
@@ -173,6 +183,7 @@
 			$("#SessionPanel").hide();
 			$("#CookiesPanel").hide();
 			$("#CGIPanel").hide();
+			$("#VariablesPanel").hide();
 			$("#SystemPanel").hide();
 		});
 		
@@ -183,6 +194,18 @@
 			$("#SessionPanel").hide();
 			$("#CookiesPanel").hide();
 			$("#RCPanel").hide();
+			$("#VariablesPanel").hide();
+			$("#SystemPanel").hide();
+		});
+		
+		$("#showVariables").click(function(){
+			$("#VariablesPanel").show();
+			<cfif structKeyExists(request, 'exception')>$("#ExceptionPanel").hide();</cfif>
+			$("#ApplicationPanel").hide();
+			$("#SessionPanel").hide();
+			$("#CookiesPanel").hide();
+			$("#RCPanel").hide();
+			$("#CGIPanel").hide();
 			$("#SystemPanel").hide();
 		});
 		
@@ -193,6 +216,7 @@
 			$("#SessionPanel").hide();
 			$("#CookiesPanel").hide();
 			$("#RCPanel").hide();
+			$("#VariablesPanel").hide();
 			$("#CGIPanel").hide();
 		});
 	});
