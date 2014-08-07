@@ -710,8 +710,7 @@ component {
 		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & 'var aData = #variables.table#Table.fnGetData( iPos );//get data of the clicked row' & chr(10);
 	    retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & 'var iId = aData[0];//get column data of the row' & chr(10);
 	    retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & '<cfoutput>' & chr(10);
-		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & '<cfset viewUrl = ##buildURL("#variables.table#.viewEdit")##>' & chr(10);
-		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & '<cfset redirectUrl = #apos##quot##apos# & viewUrl & #apos#&#variables.pkField#=#quot# + iId#apos#>' & chr(10);
+		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & '<cfset redirectUrl = #apos##quot##apos# & ##buildURL("#variables.table#.viewEdit")## & #apos#&#variables.pkField#=#quot# + iId#apos#>' & chr(10);
 		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & 'document.location.href = ##redirectUrl##;' & chr(10);
 		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & '</cfoutput>' & chr(10);
 		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & '}' & chr(10);
