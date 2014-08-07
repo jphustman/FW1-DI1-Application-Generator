@@ -622,6 +622,9 @@ component {
 					case "int": case "integer": case "int identity":
 						dao &= "INTEGER');" & chr(10);
 						break;
+					case "datetime": case "smalldatetime":
+						dao &= "TIMESTAMP');" & chr(10);
+						break;
 					default:
 						dao &= "VARCHAR');" & chr(10);
 						break;
