@@ -9,7 +9,7 @@
 					            <label for="dsn">Table Name</label><span class="fa fa-question-circle" title="Select the table the CRUD code will interact with." ></span>&nbsp;
 					            <select name="tables" id="tables" multiple="multiple" required>
 									<cfoutput query="rc.filtered">
-										<option value="#TABLE_NAME#">#ucase(table_name)#</option>
+										<option value="#table_name#">#table_name#</option>
 									</cfoutput>
 								</select>		            
 					        </div>

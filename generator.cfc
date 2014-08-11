@@ -20,8 +20,7 @@ component {
 			}
 		}
 	  	
-	  	
-		//variables.nounForms = CreateObject("component", "singularPluralNounForm").init();
+		variables.nounForms = CreateObject("component", "nounForms").init();
 						
 	  	variables.apos = "'";
 	  	variables.quot = '"';
@@ -40,8 +39,8 @@ component {
 	}
 	
 	// Get Table Info (Column Names)
-	public query function getColumns() {
-		return new dbinfo(datasource=variables.dsn).columns(table=variables.table);
+	public query function getColumns(required string table) {
+		return new dbinfo(datasource=variables.dsn).columns(table=arguments.table);
 	}
 	
 	// Capitalize first letter of a string
@@ -71,7 +70,9 @@ component {
 				retVar &=  chr(9) & chr(9) & 'error = "main.error",' & chr(10);
 				retVar &=  chr(9) & chr(9) & 'reload = "reload",' & chr(10);
 				retVar &=  chr(9) & chr(9) & 'password = "true",' & chr(10);
-				retVar &=  chr(9) & chr(9) & 'reloadApplicationOnEveryRequest = false' & chr(10);
+				retVar &=  chr(9) & chr(9) & '// Reload application on every request set to true for development purposes' & chr(10);
+				retVar &=  chr(9) & chr(9) & '// Strongly recommended to change to false before pushing to production' & chr(10);
+				retVar &=  chr(9) & chr(9) & 'reloadApplicationOnEveryRequest = true' & chr(10);
 			retVar &=  chr(9) & '};' & chr(10) & chr(10);
 			
 			retVar &=  chr(9) & 'function setupApplication() {' & chr(10);
@@ -188,8 +189,14 @@ component {
 		var serviceCall = "variables." & service;
 		
 		var controller = "component accessors=true {" & chr(10) & chr(10);
-		controller &= chr(9) & "property " & service & ";" & chr(10) & chr(10);
-		controller &= chr(9) & "function init( fw ) {" & chr(10);
+		controller &= chr(9) & "property " & service & ";" & chr(10);
+		for(i=1;i<=variables.tableColumns.recordCount;i++) {
+			if(Find('_fk',variables.tableColumns.column_name[i]) neq 0) {
+				keyTable = nounForms.pluralize(mid(variables.tableColumns.column_name[i],1,len(variables.tableColumns.column_name[i])-3));
+				controller &= chr(9) & "property " & keyTable & "Service;" & chr(10);
+			}
+		}
+		controller &= chr(10) & chr(9) & "function init( fw ) {" & chr(10);
 		controller &= chr(9) & chr(9) & "variables.fw = fw;" & chr(10);
 		controller &= chr(9) & "}" & chr(10) & chr(10);
 		
@@ -198,6 +205,12 @@ component {
 		controller &= chr(9) & "}" & chr(10) & chr(10);
 		
 		controller &= chr(9) & "public void function create( rc ) {" & chr(10);
+		for(i=1;i<=variables.tableColumns.recordCount;i++) {
+			if(Find('_fk',variables.tableColumns.column_name[i]) neq 0) {
+				keyTable = nounForms.pluralize(mid(variables.tableColumns.column_name[i],1,len(variables.tableColumns.column_name[i])-3));
+				controller &= chr(9) & chr(9) & "rc." & keyTable & " = variables." & keyTable & "Service.getAll();" & chr(10);
+			}
+		}
 		controller &= chr(9) & chr(9) & "if(structKeyExists(rc, 'btnSubmit')) {" & chr(10);
 		controller &= chr(9) & chr(9) & chr(9) & "rc.msg = " & serviceCall & ".create( rc );" & chr(10);
 		controller &= chr(9) & chr(9) & "}" & chr(10);
@@ -205,10 +218,24 @@ component {
 		
 		controller &= chr(9) & "public void function view( rc ) {" & chr(10);
 		controller &= chr(9) & chr(9) & "rc." & variables.table & "Bean = " & serviceCall & ".getBeanById(rc." & variables.pkField & ");" & chr(10);
+		for(i=1;i<=variables.tableColumns.recordCount;i++) {
+			if(Find('_fk',variables.tableColumns.column_name[i]) neq 0) {
+				keyTable = mid(variables.tableColumns.column_name[i],1,len(variables.tableColumns.column_name[i])-3);
+				controller &= chr(9) & chr(9) & "rc." & keyTable & " = variables." & keyTable & "Service.getAll();" & chr(10);
+				controller &= chr(9) & chr(9) & "rc.#nounForms.singularize(variables.table)##capitalizeString(nounForms.singularize(keyTable))# = variables.#keyTable#Service.getBeanById(rc.#keyTable#Bean.get#capitalizeString(keyTable)#_fk());" & chr(10);
+			}
+		}
 		controller &= chr(9) & "}" & chr(10) & chr(10);
 		
 		controller &= chr(9) & "public void function viewEdit( rc ) {" & chr(10);
 		controller &= chr(9) & chr(9) & "rc." & variables.table & "Bean = " & serviceCall & ".getBeanById(rc." & variables.pkField & ");" & chr(10);
+		for(i=1;i<=variables.tableColumns.recordCount;i++) {
+			if(Find('_fk',variables.tableColumns.column_name[i]) neq 0) {
+				keyTable = mid(variables.tableColumns.column_name[i],1,len(variables.tableColumns.column_name[i])-3);
+				controller &= chr(9) & chr(9) & "rc." & keyTable & " = variables." & keyTable & "Service.getAll();" & chr(10);
+				controller &= chr(9) & chr(9) & "rc.#nounForms.singularize(variables.table)##capitalizeString(nounForms.singularize(keyTable))# = variables.#keyTable#Service.getBeanById(rc.#keyTable#Bean.get#capitalizeString(keyTable)#_fk());" & chr(10);
+			}
+		}
 		controller &= chr(9) & chr(9) & "if(structKeyExists(rc, 'btnSubmit')) {" & chr(10);
 		controller &= chr(9) & chr(9) & chr(9) & "rc.msg = " & serviceCall & ".update( rc );" & chr(10);
 		controller &= chr(9) & chr(9) & chr(9) & "rc." & variables.table & "Bean = " & serviceCall & ".getBeanById(rc." & variables.pkField & ");" & chr(10);
@@ -217,6 +244,12 @@ component {
 		
 		controller &= chr(9) & "public void function update( rc ) {" & chr(10);
 		controller &= chr(9) & chr(9) & "rc." & variables.table & "Bean = " & serviceCall & ".getBeanById(rc." & variables.pkField & ");" & chr(10);
+		for(i=1;i<=variables.tableColumns.recordCount;i++) {
+			if(Find('_fk',variables.tableColumns.column_name[i]) neq 0) {
+				keyTable = mid(variables.tableColumns.column_name[i],1,len(variables.tableColumns.column_name[i])-3);
+				controller &= chr(9) & chr(9) & "rc." & keyTable & " = variables." & keyTable & "Service.getAll();" & chr(10);
+			}
+		}
 		controller &= chr(9) & chr(9) & "if(structKeyExists(rc, 'btnSubmit')) {" & chr(10);
 		controller &= chr(9) & chr(9) & chr(9) & "rc.msg = " & serviceCall & ".update( rc );" & chr(10);
 		controller &= chr(9) & chr(9) & chr(9) & "rc." & variables.table & "Bean = " & serviceCall & ".getBeanById(rc." & variables.pkField & ");" & chr(10);
@@ -306,7 +339,20 @@ component {
 		dao &= chr(9) & "public any function getAll() {" & chr(10);
 		dao &= chr(9) & chr(9) & "var qRead = new query();" & chr(10);
 		dao &= chr(9) & chr(9) & "qRead.setDatasource(Application.Datasource);" & chr(10) & chr(10);
-		dao &= chr(9) & chr(9) & "var sqlString = 'Select * from " & variables.table & "';" & chr(10);
+		var sortOrder = '';
+		for(i=1;i<=variables.tableColumns.recordCount;i++) {
+			if(Find('Name',variables.tableColumns.column_name[i]) neq 0) {
+				if(sortOrder neq '') {
+					sortOrder &= ', ';
+				}
+				sortOrder &= variables.tableColumns.column_name[i];
+			}	
+		}
+		dao &= chr(9) & chr(9) & "var sqlString = 'Select * from " & variables.table;
+		if(sortOrder neq '') {
+			dao &= " order by " & sortOrder & "';";
+		}
+		dao &= chr(10);
 		dao &= chr(9) & chr(9) & "qRead.setSQL(sqlString);" & chr(10) & chr(10);
 		dao &= chr(9) & chr(9) & "return qRead.execute().getResult();" & chr(10);
 		dao &= chr(9) & "}" & chr(10) & chr(10);
@@ -409,33 +455,7 @@ component {
 		dao &= chr(9) & chr(9) & "try {" & chr(10);
 		
 		dao &= chr(9) & chr(9) & chr(9) & "var qInsert = new query();" & chr(10);
-		dao &= chr(9) & chr(9) & chr(9) & "qInsert.setDatasource(Application.Datasource);" & chr(10) & chr(10);
-		
-		/*
-		dao &= chr(9) & chr(9) & chr(9) & "if(arguments.bean.getAutoGenerateId(arguments.bean) eq false) {" & chr(10);
-		dao &= chr(9) & chr(9) & chr(9) & chr(9) & "var generatedGuid = createSQLUUID();" & chr(10);
-		dao &= chr(9) & chr(9) & chr(9) & chr(9) & "var sqlString = 'Insert Into e4t_courses(";
-		
-		aList = "";	
-		for(i=1;i<=variables.tableColumns.recordCount;i++) {
-			aList &= variables.tableColumns.column_name[i] & ",";
-		}
-		aList = mid(aList, 1, len(aList)-1);
-		dao &= aList;
-		dao &= ")'" & chr(10);
-		
-		dao &= chr(9) & chr(9) & chr(9) & chr(9) & "& ' values(";
-		bList = "";
-		for(i=1;i<=variables.tableColumns.recordCount;i++) {	
-			bList &= ":" & variables.tableColumns.column_name[i] & ",";
-		}
-		bList = mid(bList, 1, len(bList)-1);
-		dao &= bList;
-		dao &= ")';" & chr(10);
-		dao &= chr(9) & chr(9) & chr(9) & chr(9) & "qInsert.addParam(name='" & variables.pkField & "',value='##generatedGuid##',CFSQLTYPE='CF_SQL_VARCHAR');" & chr(10);
-		dao &= chr(9) & chr(9) & chr(9) & "} else {" & chr(10);
-		*/
-		
+		dao &= chr(9) & chr(9) & chr(9) & "qInsert.setDatasource(Application.Datasource);" & chr(10) & chr(10);		
 		dao &= chr(9) & chr(9) & chr(9) & "var sqlString = 'Insert Into #variables.table#(";
 		
 		aList = "";	
@@ -458,7 +478,6 @@ component {
 		bList = mid(bList, 1, len(bList)-1);
 		dao &= bList;
 		dao &= ")';" & chr(10);
-		//dao &= chr(9) & chr(9) & chr(9) & "}" & chr(10);
 		
 		for(i=1;i<=variables.tableColumns.recordCount;i++) {
 			if(variables.tableColumns.is_primarykey[i] neq "yes"){
@@ -745,7 +764,7 @@ component {
 		retVar &= chr(9) & chr(9) & chr(9) & '</cfif>' & chr(10);
 		retVar &= chr(9) & chr(9) & '</cfif>' & chr(10) & chr(10);
 				
-		retVar &= chr(9) & chr(9) & '<a href="<cfoutput>##buildURL("#variables.table#.create")##</cfoutput>"><span class="fa fa-plus-circle"></span> Add #variables.table#</a>' & chr(10);
+		retVar &= chr(9) & chr(9) & '<a href="<cfoutput>##buildURL("#variables.table#.create")##</cfoutput>"><span class="fa fa-plus-circle"></span> Add A #nounForms.singularize(capitalizeString(variables.table))#</a>' & chr(10);
 		retVar &= chr(9) & chr(9) & '<br><br>' & chr(10);
 		retVar &= chr(9) & chr(9) & '<table id="#variables.table#" class="display hover">' & chr(10);
 		retVar &= chr(9) & chr(9) & chr(9) & '<thead>' & chr(10);
@@ -810,7 +829,7 @@ component {
 		
 		retVar &= '<div class="header">' & chr(10);
 		retVar &= chr(9) & '<h1><cfoutput>##application.sitetitle##</cfoutput></h1>' & chr(10);
-		retVar &= chr(9) & '<h2>Create #capitalizeString(variables.table)#</h2>' & chr(10);
+		retVar &= chr(9) & '<h2>Create A #nounForms.singularize(capitalizeString(variables.table))#</h2>' & chr(10);
 		retVar &= '</div>' & chr(10) & chr(10);	
 		
 		retVar &= '<div class="pure-g">' & chr(10);
@@ -835,47 +854,65 @@ component {
 		retVar &= chr(9) & chr(9) & '</p>' & chr(10) & chr(10);
 		
 		retVar &= chr(9) & chr(9) & '<form action="<cfoutput>##buildURL("#variables.table#.create")##</cfoutput>" method="post" id="#variables.table#Form" class="pure-form pure-form-aligned">' & chr(10);
-		retVar &= chr(9) & chr(9) & chr(9) & '<fieldset>' & chr(10);
-		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & '<legend>Create #capitalizeString(variables.table)#</legend>' & chr(10) & chr(10);
 				
 		for(i=1;i<=variables.tableColumns.recordCount;i++) {
 		
 			if(variables.tableColumns.is_primarykey[i] neq "yes") {
-		
 				retVar &= chr(9) & chr(9) & chr(9) & chr(9) & '<div class="pure-control-group">' & chr(10);
-				retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<label>#decamelizeString(variables.tableColumns.column_name[i])#</label>' & chr(10);
-	
-				switch(variables.tableColumns.type_name[i]) {
-					case "bit":
-					retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="#variables.tableColumns.column_name[i]#" type="radio" value="1"/> True' & chr(10);
-					retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="#variables.tableColumns.column_name[i]#" type="radio" value="0"/> False' & chr(10);
-					break;
-										
-					case "char": case "nchar": case "varchar": case "varchar(max)": case "nvarchar": case "text": case "ntext":
-						if(variables.tableColumns.column_size[i] lte 250) {
-							retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="#variables.tableColumns.column_name[i]#" type="text" size="50" maxlength="50" />' & chr(10);
-						} else {
-							retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<textarea name="#variables.tableColumns.column_name[i]#" cols="48" rows="4"></ textarea>' & chr(10);
-						}					
-					break;
-					
-					case "date": case "datetime": case "smalldatetime":
-					retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="#variables.tableColumns.column_name[i]#" type="text" size="50" class="datepicker" />' & chr(10);
-					break;
-					
-					case "int": case "integer": case "smallint": case "tinyint":
-					retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="#variables.tableColumns.column_name[i]#" type="text" size="50" class="spinner" />' & chr(10);
-					break;
-					
-					case "decimal": case "money": case "smallmoney": case "float": case "numeric": case "real":
-					retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="#variables.tableColumns.column_name[i]#" type="text" size="20" />' & chr(10);
-					break;
-					
-					default:
-					retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="#variables.tableColumns.column_name[i]#" type="text" size="50" maxlength="50" />' & chr(10);
-					break;
+
+				if(Find('_fk',variables.tableColumns.column_name[i]) neq 0) {			
+					keyTable = mid(variables.tableColumns.column_name[i],1,len(variables.tableColumns.column_name[i])-3);
+					pluralTable = nounForms.pluralize(keyTable);
+					keyTableColumns = getColumns(pluralTable);
+					keyTableTitle = "";
+					for(x=1;x<=keyTableColumns.recordCount;x++) {
+						if(keyTableColumns.Is_PrimaryKey[x] EQ true) {
+							var pkKeyTable = keyTableColumns.column_name[x];
+						}
+						else if(Find('Name',keyTableColumns.column_name[x]) neq 0) {
+							keyTableTitle &= keyTableColumns.column_name[x] & ' ';
+						}
+					}
+					keyTableTitle = trim(keyTableTitle);
+					retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<label>#decamelizeString(nounForms.singularize(capitalizeString(keyTable)))#</label>' & chr(10);
+					retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<select name="#variables.tableColumns.column_name[i]#">' & chr(10);
+					retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & '<cfoutput query="rc.#pluralTable#">' & chr(10);
+					retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & '<option value="###pkKeyTable###">###keyTableTitle###</option>' & chr(10);
+					retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & '</cfoutput>' & chr(10);
+					retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & '</select>' & chr(10);
+				} else {					
+					retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<label>#decamelizeString(nounForms.singularize(capitalizeString(variables.tableColumns.column_name[i])))#</label>' & chr(10);
+					switch(variables.tableColumns.type_name[i]) {
+						case "bit":
+						retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="#variables.tableColumns.column_name[i]#" type="radio" value="1"/> True' & chr(10);
+						retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="#variables.tableColumns.column_name[i]#" type="radio" value="0"/> False' & chr(10);
+						break;
+											
+						case "char": case "nchar": case "varchar": case "varchar(max)": case "nvarchar": case "text": case "ntext":
+							if(variables.tableColumns.column_size[i] lte 250) {
+								retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="#variables.tableColumns.column_name[i]#" type="text" size="50" maxlength="50" />' & chr(10);
+							} else {
+								retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<textarea name="#variables.tableColumns.column_name[i]#" cols="48" rows="4"></ textarea>' & chr(10);
+							}					
+						break;
+						
+						case "date": case "datetime": case "smalldatetime":
+						retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="#variables.tableColumns.column_name[i]#" type="text" size="50" class="datepicker" />' & chr(10);
+						break;
+						
+						case "int": case "integer": case "smallint": case "tinyint":
+						retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="#variables.tableColumns.column_name[i]#" type="text" size="50" class="spinner" />' & chr(10);
+						break;
+						
+						case "decimal": case "money": case "smallmoney": case "float": case "numeric": case "real":
+						retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="#variables.tableColumns.column_name[i]#" type="text" size="20" />' & chr(10);
+						break;
+						
+						default:
+						retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="#variables.tableColumns.column_name[i]#" type="text" size="50" maxlength="50" />' & chr(10);
+						break;
+					}
 				}
-	
 				retVar &= chr(9) & chr(9) & chr(9) & chr(9) & '</div>' & chr(10) & chr(10);
 	
 			}
@@ -884,9 +921,8 @@ component {
 			
 		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & '<div class="pure-control-group">' & chr(10);
 		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<label>&nbsp;</label>' & chr(10);
-		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="btnSubmit" type="submit" value="Submit" SubmitOnce="true" class="pure-button pure-button-primary" />' & chr(10);
+		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="btnSubmit" type="submit" value="Create This #nounForms.singularize(capitalizeString(variables.table))#" SubmitOnce="true" class="pure-button pure-button-primary" />' & chr(10);
 		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & '</div>' & chr(10);
-		retVar &= chr(9) & chr(9) & chr(9) & '</fieldset>' & chr(10);
 		retVar &= chr(9) & chr(9) & '</form>' & chr(10);
 		retVar &= chr(9) & '</div>' & chr(10);
 		retVar &= '</div>' & chr(10) & chr(10);
@@ -986,47 +1022,67 @@ component {
 		retVar &= chr(9) & chr(9) & '<cfoutput>' & chr(10);
 		retVar &= chr(9) & chr(9) & '<form action="##buildURL("#variables.table#.update")##" method="post" id="#variables.table#Form" class="pure-form pure-form-aligned">' & chr(10);
 		retVar &= chr(9) & chr(9) & chr(9) & '<fieldset>' & chr(10);
-		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & '<legend>Update #capitalizeString(variables.table)#</legend>' & chr(10) & chr(10);
+		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & '<legend>Update ##rc.#variables.table#Bean.get#capitalizeString(variables.tableColumns.column_name[i])#()##</legend>' & chr(10) & chr(10);
 				
 		for(i=1;i<=variables.tableColumns.recordCount;i++) {
 		
 			if(variables.tableColumns.is_primarykey[i] neq "yes") {
 		
 				retVar &= chr(9) & chr(9) & chr(9) & chr(9) & '<div class="pure-control-group">' & chr(10);
-				retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<label>#decamelizeString(variables.tableColumns.column_name[i])#</label>' & chr(10);
-	
-				switch(variables.tableColumns.type_name[i]) {
-					case "bit":
-					retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="#variables.tableColumns.column_name[i]#" type="radio" value="1" <cfif ##rc.#variables.table#Bean.get#capitalizeString(variables.tableColumns.column_name[i])#()## eq 1>checked="checked"</cfif>/> True' & chr(10);
-					retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="#variables.tableColumns.column_name[i]#" type="radio" value="0" <cfif ##rc.#variables.table#Bean.get#capitalizeString(variables.tableColumns.column_name[i])#()## eq 0>checked="checked"</cfif>/> False' & chr(10);
-					break;
-					
-					case "char": case "nchar": case "varchar": case "varchar(max)": case "nvarchar": case "text": case "ntext":
-						if(variables.tableColumns.column_size[i] lte 250) {
-							retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="#variables.tableColumns.column_name[i]#" type="text" size="50" maxlength="50" value="##rc.#variables.table#Bean.get#capitalizeString(variables.tableColumns.column_name[i])#()##" />' & chr(10);
-						} else {
-							retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<textarea name="#variables.tableColumns.column_name[i]#" cols="48" rows="4">##rc.#variables.table#Bean.get#capitalizeString(variables.tableColumns.column_name[i])#()##"</ textarea>' & chr(10);
-						}					
-					break;
-					
-					case "date": case "datetime": case "smalldatetime":
-					retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="#variables.tableColumns.column_name[i]#" type="text" size="50" class="datepicker" value="##rc.#variables.table#Bean.get#capitalizeString(variables.tableColumns.column_name[i])#()##" />' & chr(10);
-					break;
-					
-					case "int": case "integer": case "smallint": case "tinyint":
-					retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="#variables.tableColumns.column_name[i]#" type="text" size="50" class="spinner" value="##rc.#variables.table#Bean.get#capitalizeString(variables.tableColumns.column_name[i])#()##" />' & chr(10);
-					break;
-					
-					case "decimal": case "money": case "smallmoney": case "float": case "numeric": case "real":
-					retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="#variables.tableColumns.column_name[i]#" type="text" size="20" value="##rc.#variables.table#Bean.get#capitalizeString(variables.tableColumns.column_name[i])#()##" />' & chr(10);
-					break;
-					
-					default:
-					retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="#variables.tableColumns.column_name[i]#" type="text" size="50" maxlength="50" value="##rc.#variables.table#Bean.get#capitalizeString(variables.tableColumns.column_name[i])#()##" />' & chr(10);
-					break;
 				
+				if(Find('_fk',variables.tableColumns.column_name[i]) neq 0) {			
+					keyTable = mid(variables.tableColumns.column_name[i],1,len(variables.tableColumns.column_name[i])-3);
+					pluralTable = nounForms.pluralize(keyTable);
+					keyTableColumns = getColumns(pluralTable);
+					keyTableTitle = "";
+					for(x=1;x<=keyTableColumns.recordCount;x++) {
+						if(keyTableColumns.Is_PrimaryKey[x] EQ true) {
+							var pkKeyTable = keyTableColumns.column_name[x];
+						}
+						else if(Find('Name',keyTableColumns.column_name[x]) neq 0) {
+							keyTableTitle &= keyTableColumns.column_name[x] & ' ';
+						}
+					}
+					keyTableTitle = trim(keyTableTitle);
+					retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<label>#decamelizeString(nounForms.singularize(capitalizeString(keyTable)))#</label>' & chr(10);
+					retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<select name="#variables.tableColumns.column_name[i]#">' & chr(10);
+					retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & '<cfoutput query="rc.#pluralTable#">' & chr(10);
+					retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & '<option value="###pkKeyTable###"<cfif ###pkKeyTable### eq ##rc.#variables.table#Bean.get#capitalizeString(variables.tableColumns.column_name[i])#()##>selected="selected"</cfif>>###keyTableTitle###</option>' & chr(10);
+					retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & '</cfoutput>' & chr(10);
+					retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & '</select>' & chr(10);
+				} else {					
+					retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<label>#decamelizeString(nounForms.singularize(capitalizeString(variables.tableColumns.column_name[i])))#</label>' & chr(10);
+					switch(variables.tableColumns.type_name[i]) {
+						case "bit":
+						retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="#variables.tableColumns.column_name[i]#" type="radio" value="1" <cfif ##rc.#variables.table#Bean.get#capitalizeString(variables.tableColumns.column_name[i])#()## eq 1>checked="checked"</cfif>/> True' & chr(10);
+						retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="#variables.tableColumns.column_name[i]#" type="radio" value="0" <cfif ##rc.#variables.table#Bean.get#capitalizeString(variables.tableColumns.column_name[i])#()## eq 0>checked="checked"</cfif>/> False' & chr(10);
+						break;
+						
+						case "char": case "nchar": case "varchar": case "varchar(max)": case "nvarchar": case "text": case "ntext":
+							if(variables.tableColumns.column_size[i] lte 250) {
+								retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="#variables.tableColumns.column_name[i]#" type="text" size="50" maxlength="50" value="##rc.#variables.table#Bean.get#capitalizeString(variables.tableColumns.column_name[i])#()##" />' & chr(10);
+							} else {
+								retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<textarea name="#variables.tableColumns.column_name[i]#" cols="48" rows="4">##rc.#variables.table#Bean.get#capitalizeString(variables.tableColumns.column_name[i])#()##"</ textarea>' & chr(10);
+							}					
+						break;
+						
+						case "date": case "datetime": case "smalldatetime":
+						retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="#variables.tableColumns.column_name[i]#" type="text" size="50" class="datepicker" value="##rc.#variables.table#Bean.get#capitalizeString(variables.tableColumns.column_name[i])#()##" />' & chr(10);
+						break;
+						
+						case "int": case "integer": case "smallint": case "tinyint":
+						retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="#variables.tableColumns.column_name[i]#" type="text" size="50" class="spinner" value="##rc.#variables.table#Bean.get#capitalizeString(variables.tableColumns.column_name[i])#()##" />' & chr(10);
+						break;
+						
+						case "decimal": case "money": case "smallmoney": case "float": case "numeric": case "real":
+						retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="#variables.tableColumns.column_name[i]#" type="text" size="20" value="##rc.#variables.table#Bean.get#capitalizeString(variables.tableColumns.column_name[i])#()##" />' & chr(10);
+						break;
+						
+						default:
+						retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="#variables.tableColumns.column_name[i]#" type="text" size="50" maxlength="50" value="##rc.#variables.table#Bean.get#capitalizeString(variables.tableColumns.column_name[i])#()##" />' & chr(10);
+						break;
+					}
 				}
-	
 				retVar &= chr(9) & chr(9) & chr(9) & chr(9) & '</div>' & chr(10) & chr(10);
 	
 			}
@@ -1125,7 +1181,7 @@ component {
 		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & '<span class="fa fa-arrow-left"></span> Return to #variables.table#' & chr(10);
 		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & '</a> | ' & chr(10);
 		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & '<a href="##buildURL(#variables.apos##variables.table#.update?#variables.pkField#=##rc.#variables.table#Bean.get#capitalizeString(variables.pkField)#()###variables.apos#)##" style="text-decoration: none;">' & chr(10);
-		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & '<span class="fa fa-pencil-square-o"></span> Update This #variables.table#' & chr(10);
+		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & '<span class="fa fa-pencil-square-o"></span> Update This #nounForms.singularize(capitalizeString(variables.table))#' & chr(10);
 		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & '</a> |' & chr(10);
 		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & '<a href="##buildURL(#variables.apos##variables.table#.delete?#variables.pkField#=##rc.#variables.table#Bean.get#capitalizeString(variables.pkField)#()###variables.apos#)##" onclick="javascript:return confirm(#variables.apos#Are you sure you want to delete ';
 		for(i=1;i<=variables.tableColumns.recordCount;i++) {
@@ -1134,7 +1190,7 @@ component {
 			 }
 		} 
 		retVar &= '#variables.apos#)" style="text-decoration: none;">' & chr(10);
-		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & '<span class="fa fa-minus-circle"></span> Delete This #variables.table#' & chr(10);
+		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & '<span class="fa fa-minus-circle"></span> Delete This #nounForms.singularize(capitalizeString(variables.table))#' & chr(10);
 		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & '</a>' & chr(10);
 		retVar &= chr(9) & chr(9) & chr(9) & '</p>' & chr(10) & chr(10);
 				
@@ -1150,9 +1206,16 @@ component {
 		} else {
 		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & '<tr>' & chr(10);
 		}
-		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & '<td><strong>#decamelizeString(variables.tableColumns.column_name[i])#</strong></td>' & chr(10); 
+		if(Find('_fk',variables.tableColumns.column_name[i]) neq 0) {
+			fieldLabel = mid(variables.tableColumns.column_name[i],1,len(variables.tableColumns.column_name[i])-3);
+		} else {
+			fieldLabel = variables.tableColumns.column_name[i];
+		}
+		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & '<td><strong>#decamelizeString(nounForms.singularize(capitalizeString(fieldLabel)))#</strong></td>' & chr(10);  
 		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & '<td>';
-		if(variables.tableColumns.type_name[i] eq "money") { 
+		if(Find('_fk',variables.tableColumns.column_name[i]) neq 0) {
+		retVar &= '##rc.#nounForms.singularize(variables.table)##nounForms.singularize(capitalizeString(fieldLabel))###';
+		} else if(variables.tableColumns.type_name[i] eq "money") { 
 		retVar &= '##dollarformat(rc.#variables.table#Bean.get#capitalizeString(variables.tableColumns.column_name[i])#())##';
 		} else if(variables.tableColumns.type_name[i] eq "bit") { 
 		retVar &= '<cfif rc.#variables.table#Bean.get#capitalizeString(variables.tableColumns.column_name[i])#() eq 1>True<cfelse>False</cfif>';
@@ -1169,7 +1232,7 @@ component {
 			}
 		}
 		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & '</tbody>' & chr(10);
-		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & '</table">' & chr(10);
+		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & '</table>' & chr(10);
 		retVar &= chr(9) & chr(9) & chr(9) & '</div>' & chr(10);
 		retVar &= chr(9) & chr(9) & '</cfoutput>' & chr(10); 
 		retVar &= chr(9) & '</div>' & chr(10); 
@@ -1231,12 +1294,12 @@ component {
 			 }
 		} 
 		retVar &= '#variables.apos#)" style="text-decoration: none;">' & chr(10);
-		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & '<span class="fa fa-minus-circle"></span> Delete This #variables.table#' & chr(10);
+		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & '<span class="fa fa-minus-circle"></span> Delete This #nounForms.singularize(capitalizeString(variables.table))#' & chr(10);
 		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & '</a>' & chr(10);
 		retVar &= chr(9) & chr(9) & chr(9) & '</p>' & chr(10) & chr(10);
 				
-		retVar &= chr(9) & chr(9) & chr(9) & '<div id="viewInfo" class=" pure-g">' & chr(10);
-		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & '<button id="showUpdate" class="pure-u-1-1 pure-button pure-button-primary">Update This #variables.table#</button>' & chr(10);
+		retVar &= chr(9) & chr(9) & chr(9) & '<div id="viewInfo" class="pure-g">' & chr(10);
+		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & '<button id="showUpdate" class="pure-u-1-1 pure-button pure-button-primary">Update This #nounForms.singularize(capitalizeString(variables.table))#</button>' & chr(10);
 		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & '<br><br>' & chr(10);
 		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & '<table class="pure-table pure-u-1-1">' & chr(10);
 		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & '<tbody>' & chr(10);
@@ -1248,10 +1311,17 @@ component {
 		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & '<tr class="pure-table-odd">' & chr(10);
 		} else {
 		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & '<tr>' & chr(10);
+		}		
+		if(Find('_fk',variables.tableColumns.column_name[i]) neq 0) {
+			fieldLabel = mid(variables.tableColumns.column_name[i],1,len(variables.tableColumns.column_name[i])-3);
+		} else {
+			fieldLabel = variables.tableColumns.column_name[i];
 		}
-		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & '<td><strong>#decamelizeString(variables.tableColumns.column_name[i])#</strong></td>' & chr(10); 
+		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & '<td><strong>#decamelizeString(nounForms.singularize(capitalizeString(fieldLabel)))#</strong></td>' & chr(10); 
 		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & '<td>';
-		if(variables.tableColumns.type_name[i] eq "money") { 
+		if(Find('_fk',variables.tableColumns.column_name[i]) neq 0) {
+		retVar &= '##rc.#nounForms.singularize(variables.table)##nounForms.singularize(capitalizeString(fieldLabel))###';
+		} else if(variables.tableColumns.type_name[i] eq "money") { 
 		retVar &= '##dollarformat(rc.#variables.table#Bean.get#capitalizeString(variables.tableColumns.column_name[i])#())##';
 		} else if(variables.tableColumns.type_name[i] eq "bit") { 
 		retVar &= '<cfif rc.#variables.table#Bean.get#capitalizeString(variables.tableColumns.column_name[i])#() eq 1>True<cfelse>False</cfif>';
@@ -1271,62 +1341,86 @@ component {
 		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & '</table>' & chr(10);
 		retVar &= chr(9) & chr(9) & chr(9) & '</div>' & chr(10);
 		retVar &= chr(9) & chr(9) & chr(9) & '<div id="updateInfo">' & chr(10);
-		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & '<button id="showView" class="pure-u-1-1 pure-button pure-button-primary">Return To View This #variables.table#</button>' & chr(10);
+		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & '<button id="showView" class="pure-u-1-1 pure-button pure-button-primary">Return To View This #nounForms.singularize(capitalizeString(variables.table))#</button>' & chr(10);
 		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & '<br><br>' & chr(10);
 		retVar &= chr(9) & chr(9) & '<cfoutput>' & chr(10);
 		retVar &= chr(9) & chr(9) & '<form action="##buildURL("#variables.table#.viewedit")##" method="post" id="#variables.table#Form" class="pure-form pure-form-aligned">' & chr(10);
 		retVar &= chr(9) & chr(9) & chr(9) & '<fieldset>' & chr(10);
-		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & '<legend>Update #capitalizeString(variables.table)#</legend>' & chr(10) & chr(10);
+		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & '<legend>Update #nounForms.singularize(capitalizeString(variables.table))#</legend>' & chr(10) & chr(10);
 				
 		for(i=1;i<=variables.tableColumns.recordCount;i++) {
 		
 			if(variables.tableColumns.is_primarykey[i] neq "yes") {
 		
 				retVar &= chr(9) & chr(9) & chr(9) & chr(9) & '<div class="pure-control-group">' & chr(10);
-				retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<label>#decamelizeString(variables.tableColumns.column_name[i])#</label>' & chr(10);
-	
-				switch(variables.tableColumns.type_name[i]) {
-					case "bit":
-					retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="#variables.tableColumns.column_name[i]#" type="radio" value="1" <cfif ##rc.#variables.table#Bean.get#capitalizeString(variables.tableColumns.column_name[i])#()## eq 1>checked="checked"</cfif>/> True' & chr(10);
-					retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="#variables.tableColumns.column_name[i]#" type="radio" value="0" <cfif ##rc.#variables.table#Bean.get#capitalizeString(variables.tableColumns.column_name[i])#()## eq 0>checked="checked"</cfif>/> False' & chr(10);
-					break;
-					
-					case "char": case "nchar": case "varchar": case "varchar(max)": case "nvarchar": case "text": case "ntext":
-						if(variables.tableColumns.column_size[i] lte 250) {
-							retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="#variables.tableColumns.column_name[i]#" type="text" size="50" maxlength="50" value="##rc.#variables.table#Bean.get#capitalizeString(variables.tableColumns.column_name[i])#()##" />' & chr(10);
-						} else {
-							retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<textarea name="#variables.tableColumns.column_name[i]#" cols="48" rows="4">##rc.#variables.table#Bean.get#capitalizeString(variables.tableColumns.column_name[i])#()##"</ textarea>' & chr(10);
-						}					
-					break;
-					
-					case "date": case "datetime": case "smalldatetime":
-					retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="#variables.tableColumns.column_name[i]#" type="text" size="50" class="datepicker" value="##rc.#variables.table#Bean.get#capitalizeString(variables.tableColumns.column_name[i])#()##" />' & chr(10);
-					break;
-					
-					case "int": case "integer": case "smallint": case "tinyint":
-					retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="#variables.tableColumns.column_name[i]#" type="text" size="50" class="spinner" value="##rc.#variables.table#Bean.get#capitalizeString(variables.tableColumns.column_name[i])#()##" />' & chr(10);
-					break;
-					
-					case "decimal": case "money": case "smallmoney": case "float": case "numeric": case "real":
-					retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="#variables.tableColumns.column_name[i]#" type="text" size="20" value="##rc.#variables.table#Bean.get#capitalizeString(variables.tableColumns.column_name[i])#()##" />' & chr(10);
-					break;
-					
-					default:
-					retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="#variables.tableColumns.column_name[i]#" type="text" size="50" maxlength="50" value="##rc.#variables.table#Bean.get#capitalizeString(variables.tableColumns.column_name[i])#()##" />' & chr(10);
-					break;
-				
+				if(Find('_fk',variables.tableColumns.column_name[i]) neq 0) {
+					fieldLabel = mid(variables.tableColumns.column_name[i],1,len(variables.tableColumns.column_name[i])-3);
+				} else {
+					fieldLabel = variables.tableColumns.column_name[i];
 				}
-	
-				retVar &= chr(9) & chr(9) & chr(9) & chr(9) & '</div>' & chr(10) & chr(10);
-	
-			}
-	
+				retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<label>#decamelizeString(nounForms.singularize(capitalizeString(fieldLabel)))#</label>' & chr(10);
+				if(Find('_fk',variables.tableColumns.column_name[i]) neq 0) {
+					keyTable = mid(variables.tableColumns.column_name[i],1,len(variables.tableColumns.column_name[i])-3);
+					pluralTable = nounForms.pluralize(keyTable);
+					keyTableColumns = getColumns(pluralTable);
+					keyTableTitle = "";
+					for(x=1;x<=keyTableColumns.recordCount;x++) {
+						if(keyTableColumns.Is_PrimaryKey[x] EQ true) {
+							var pkKeyTable = keyTableColumns.column_name[x];
+						}
+						else if(Find('Name',keyTableColumns.column_name[x]) neq 0) {
+							keyTableTitle &= keyTableColumns.column_name[x] & ' ';
+						}
+					}
+					keyTableTitle = trim(keyTableTitle);
+					retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<label>#decamelizeString(nounForms.singularize(capitalizeString(keyTable)))#</label>' & chr(10);
+					retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<select name="#variables.tableColumns.column_name[i]#">' & chr(10);
+					retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & '<cfoutput query="rc.#pluralTable#">' & chr(10);
+					retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & '<option value="###pkKeyTable###"<cfif ###pkKeyTable### eq ##rc.#variables.table#Bean.get#capitalizeString(variables.tableColumns.column_name[i])#()##>selected="selected"</cfif>>###keyTableTitle###</option>' & chr(10);
+					retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & '</cfoutput>' & chr(10);
+					retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & '</select>' & chr(10);
+				} else {
+					switch(variables.tableColumns.type_name[i]) {
+						case "bit":
+						retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="#variables.tableColumns.column_name[i]#" type="radio" value="1" <cfif ##rc.#variables.table#Bean.get#capitalizeString(variables.tableColumns.column_name[i])#()## eq 1>checked="checked"</cfif>/> True' & chr(10);
+						retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="#variables.tableColumns.column_name[i]#" type="radio" value="0" <cfif ##rc.#variables.table#Bean.get#capitalizeString(variables.tableColumns.column_name[i])#()## eq 0>checked="checked"</cfif>/> False' & chr(10);
+						break;
+						
+						case "char": case "nchar": case "varchar": case "varchar(max)": case "nvarchar": case "text": case "ntext":
+							if(variables.tableColumns.column_size[i] lte 250) {
+								retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="#variables.tableColumns.column_name[i]#" type="text" size="50" maxlength="50" value="##rc.#variables.table#Bean.get#capitalizeString(variables.tableColumns.column_name[i])#()##" />' & chr(10);
+							} else {
+								retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<textarea name="#variables.tableColumns.column_name[i]#" cols="48" rows="4">##rc.#variables.table#Bean.get#capitalizeString(variables.tableColumns.column_name[i])#()##"</ textarea>' & chr(10);
+							}					
+						break;
+						
+						case "date": case "datetime": case "smalldatetime":
+						retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="#variables.tableColumns.column_name[i]#" type="text" size="50" class="datepicker" value="##rc.#variables.table#Bean.get#capitalizeString(variables.tableColumns.column_name[i])#()##" />' & chr(10);
+						break;
+						
+						case "int": case "integer": case "smallint": case "tinyint":
+						retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="#variables.tableColumns.column_name[i]#" type="text" size="50" class="spinner" value="##rc.#variables.table#Bean.get#capitalizeString(variables.tableColumns.column_name[i])#()##" />' & chr(10);
+						break;
+						
+						case "decimal": case "money": case "smallmoney": case "float": case "numeric": case "real":
+						retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="#variables.tableColumns.column_name[i]#" type="text" size="20" value="##rc.#variables.table#Bean.get#capitalizeString(variables.tableColumns.column_name[i])#()##" />' & chr(10);
+						break;
+						
+						default:
+						retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="#variables.tableColumns.column_name[i]#" type="text" size="50" maxlength="50" value="##rc.#variables.table#Bean.get#capitalizeString(variables.tableColumns.column_name[i])#()##" />' & chr(10);
+						break;
+					
+					}
+		
+					retVar &= chr(9) & chr(9) & chr(9) & chr(9) & '</div>' & chr(10) & chr(10);
+					}
+				}
 		}
 			
 		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & '<div class="pure-control-group">' & chr(10);
 		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<label>&nbsp;</label>' & chr(10);
 		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="#variables.pkField#" type="hidden" value="##rc.#variables.table#Bean.get#capitalizeString(variables.pkField)#()##" />' & chr(10);
-		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="btnSubmit" type="submit" value="Submit" SubmitOnce="true" class="pure-button pure-button-primary" />' & chr(10);
+		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & chr(9) &'<input name="btnSubmit" type="submit" value="Update This #nounForms.singularize(capitalizeString(variables.table))#" SubmitOnce="true" class="pure-button pure-button-primary" />' & chr(10);
 		retVar &= chr(9) & chr(9) & chr(9) & chr(9) & '</div>' & chr(10);
 		retVar &= chr(9) & chr(9) & chr(9) & '</fieldset>' & chr(10);
 		retVar &= chr(9) & chr(9) & '</form>' & chr(10);
