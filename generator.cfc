@@ -350,9 +350,9 @@ component {
 		}
 		dao &= chr(9) & chr(9) & "var sqlString = 'Select * from " & variables.table;
 		if(sortOrder neq '') {
-			dao &= " order by " & sortOrder & "';";
+			dao &= " order by " & sortOrder;
 		}
-		dao &= chr(10);
+		dao &= "'," & chr(10);
 		dao &= chr(9) & chr(9) & "qRead.setSQL(sqlString);" & chr(10) & chr(10);
 		dao &= chr(9) & chr(9) & "return qRead.execute().getResult();" & chr(10);
 		dao &= chr(9) & "}" & chr(10) & chr(10);
