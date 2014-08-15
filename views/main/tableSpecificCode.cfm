@@ -30,26 +30,22 @@
 							</li>
 							<li>
 								<a href="##tabs-bean">
-									#rc.table#
-									.cfc (bean)
+									#rc.table#.cfc (bean)
 								</a>
 							</li>
 							<li>
 								<a href="##tabs-controller">
-									#rc.table#
-									.cfc (controller)
+									#rc.table#.cfc (controller)
 								</a>
 							</li>
 							<li>
 								<a href="##tabs-service">
-									#rc.table#
-									Service.cfc
+									#rc.table#Service.cfc
 								</a>
 							</li>
 							<li>
 								<a href="##tabs-dao">
-									#rc.table#
-									DAO.cfc
+									#rc.table#DAO.cfc
 								</a>
 							</li>
 						</cfoutput>
@@ -163,19 +159,19 @@
 				<div class="tabs">
 					<ul>
 						<li>
-							<a href="#tabs-table">Data Table</a>
+							<a href="#tabs-table">home.cfm</a>
 						</li>
 						<li>
-							<a href="#tabs-create">Form(Create)</a>
+							<a href="#tabs-create">create.cfm</a>
 						</li>
 						<li>
-							<a href="#tabs-update">Form(Update)</a>
+							<a href="#tabs-update">update.cfm</a>
 						</li>
 						<li>
-							<a href="#tabs-view">View</a>
+							<a href="#tabs-view">view.cfm</a>
 						</li>
 						<li>
-							<a href="#tabs-viewedit">ViewEdit</a>
+							<a href="#tabs-viewedit">viewEdit.cfm</a>
 						</li>
 					</ul>
 					
