@@ -1,9 +1,10 @@
-component extends="frameworks.org.corfield.framework" {
+component extends="fw1.framework.one" {
 
-	this.name = 'fw1-di1-application-generator-2';
+	this.name = 'fw1-di1-application-generator-3';
 	this.sessionmanagement = true;
 	this.clientmanagement = true;
 	this.scriptprotect = true;
+	this.mappings["/framework"] = getDirectoryFromPath(getCurrentTemplatePath()) & "fw1/framework";
 
 	// FW/1 - configuration:
 	variables.framework = {
@@ -18,7 +19,7 @@ component extends="frameworks.org.corfield.framework" {
 	};
 
 	function setupApplication() {
-		var beanFactory = new frameworks.org.corfield.ioc( "model" );
+		var beanFactory = new framework.ioc("model");
 		setBeanFactory( beanFactory );
 	}
 
