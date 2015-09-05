@@ -39,14 +39,14 @@
 <script src="//cdn.datatables.net/1.10.7/js/jquery.dataTables.min.js"></script>
 <script>
 $(document).ready(function () {
-	'use strict';
-	$(document).tooltip();
-	$('#tableData').dataTable({
-		bJQueryUI: true,
-		sPaginationType: "full_numbers"
-	});
-	$('.tabs').tabs();
-	$("#accordion").accordion();
+    'use strict';
+    $(document).tooltip();
+    $('#tableData').dataTable({
+        bJQueryUI: true,
+        sPaginationType: "full_numbers"
+    });
+    $('.tabs').tabs();
+    $("#accordion").accordion();
 });
 </script>
 
