@@ -328,31 +328,271 @@ component {
 	public string function generateTagDAO() {
 		var dao = "<cfcomponent accessors='true' output='false'>";
 
-			// Get All
-			dao &= chr(9) & "<cffunction name='getAll' output='false'>" & chr(10);
-			dao &= chr(9) & chr(9) & "<cfset var qRead = new Query()>" & chr(10);
-			dao &= chr(9) & chr(9) & "<cfset var result = {}>" & chr(10);
-			var sortOrder = '';
-			for(i=1;i<=variables.tableColumns.recordCount;i++) {
-				if(Find('Name',variables.tableColumns.column_name[i]) neq 0) {
-					if(sortOrder neq '') {
-						sortOrder &= ', ';
-					}
-					sortOrder &= variables.tableColumns.column_name[i];
+		// Get All
+		dao &= chr(9) & "<cffunction name='getAll' output='false'>" & chr(10);
+		dao &= chr(9) & chr(9) & "<cfset var qRead = new Query()>" & chr(10);
+		dao &= chr(9) & chr(9) & "<cfset var result = {}>" & chr(10);
+		var sortOrder = '';
+		for(i=1;i<=variables.tableColumns.recordCount;i++) {
+			if(Find('Name',variables.tableColumns.column_name[i]) neq 0) {
+				if(sortOrder neq '') {
+					sortOrder &= ', ';
+				}
+				sortOrder &= variables.tableColumns.column_name[i];
+			}
+		}
+		dao &= chr(9) & chr(9) & "<cfquery name='qRead' result='result'>" & chr(10);
+		dao &= "Select * from " & variables.table;
+		if(sortOrder neq '') {
+			dao &= " order by " & sortOrder;
+		}
+		dao &= chr(10);
+		dao &= chr(9) & chr(9) & "</cfquery>" & chr(10);
+		dao &= chr(9) & chr(9) & "<cfreturn qRead.execute().getResult()>" & chr(10);
+		dao &= chr(9) & "</cffunction>" & chr(10) & chr(10);
+		dao &= chr(10);
+
+		//Get Bean by Id
+		dao &= chr(9) & '<cffunction name="getBeanById">' & chr(10);
+		dao &= chr(9) & chr(9) & '<cfargument name="id" required="true" type="numeric">' & chr(10);
+
+		dao &= chr(9) & chr(9) & "<cfset var qRead = new query()>" & chr(10);
+		dao &= chr(9) & chr(9) & "<cfset var result = {}>" & chr(10);
+		dao &= chr(9) & chr(9) & '<cfquery name="qRead" result="result">' & chr(10);
+		dao &= chr(9) & chr(9) & chr(9) & "SELECT *" & chr(10);
+	   	dao &= chr(9) & chr(9) & chr(9) & "FROM #variables.table#" & chr(10);
+	   	dao &= chr(9) & chr(9) & chr(9) & 'WHERE #variables.pkField# = <cfqueryparam value="###variables.pkField###" cfsqltype="CF_SQL_FLOAT">' & chr(10);
+		dao &= chr(9) & chr(9) & "</cfquery>" & chr(10) & chr(10);
+
+		dao &= chr(9) & chr(9) & "<cfset var #variables.table#Bean = new model.beans.#variables.table#()>" & chr(10);
+
+		for (i = 1; i <= variables.tableColumns.recordCount; i += 1) {
+			dao &= chr(9) & chr(9) & "<cfset #variables.table#Bean.set" & capitalizeString(variables.tableColumns.column_name[i]) & "( qRead." & variables.tableColumns.column_name[i] & " )>" & chr(10);
+		}
+
+		dao &= chr(9) & chr(9) & "<cfreturn #variables.table#Bean>" & chr(10);
+		dao &= chr(9) & "</cffunction>" & chr(10) & chr(10);
+
+
+		// Create
+		dao &= chr(9) & '<cffunction name="create">' & chr(10);
+		dao &= chr(9) & chr(9) & '<cfargument name="#variables.table#Bean" required="true" type="model.beans.#variables.table#">' & chr(10) & chr(10);
+
+		dao &= chr(9) & chr(9) & "<cfset var qInsert = new Query()>" & chr(10);
+		dao &= chr(9) & chr(9) & "<cfset var result = {}>" & chr(10);
+		dao &= chr(9) & chr(9) & "<cfset var msg = {}>" & chr(10) & chr(10);
+		dao &= chr(9) & chr(9) & "<cftry>" & chr(10);
+		dao &= chr(9) & chr(9) & chr(9) & '<cfquery name="qInsert" result="result">' & chr(10);
+		dao &= chr(9) & chr(9) & chr(9) & chr(9) & 'INSERT INTO #variables.table# (' & chr(10);
+
+		aList = "";
+		for(i=1;i<=variables.tableColumns.recordCount;i++) {
+			if(variables.tableColumns.is_primarykey[i] neq "yes"){
+				aList &= variables.tableColumns.column_name[i] & ",";
+			}
+		}
+		aList = mid(aList, 1, len(aList)-1);
+		dao &= aList;
+		dao &= ") VALUES (" & chr(10);
+
+		/*dao &= chr(9) & chr(9) & chr(9) & chr(9) & "& '";
+		bList = "";
+		for(i=1;i<=variables.tableColumns.recordCount;i++) {
+			if(variables.tableColumns.column_name[i] neq variables.pkField){
+				bList &= ":" & variables.tableColumns.column_name[i] & ",";
+			}
+		}
+		bList = mid(bList, 1, len(bList)-1);
+		dao &= bList;
+		dao &= ")';" & chr(10);*/
+
+		for(i=1;i<=variables.tableColumns.recordCount;i++) {
+			if(variables.tableColumns.is_primarykey[i] neq "yes"){
+				dao &= chr(9) & chr(9) & chr(9) & '<cfqueryparam value="##arguments.#variables.table#Bean.get' & capitalizeString(variables.tableColumns.column_name[i]) & '()##", cfsqltype="CF_SQL_';
+				switch(variables.tableColumns.type_name[i]) {
+					case "bit":
+						dao &= 'BIT">';
+						break;
+					case "char": case "nchar": case "uniqueidentifier": case "guid":
+						dao &= 'CHAR">';
+						break;
+					case "decimal": case "money": case "smallmoney":
+						dao &= 'DECIMAL">';
+						break;
+					case "float":
+						dao &= 'FLOAT">';
+						break;
+					case "int": case "integer": case "int identity":
+						dao &= 'INTEGER">';
+						break;
+					case "text": case "ntext":
+						dao &= 'LONGVARCHAR">';
+						break;
+					case "number":
+						if (variables.tableColumns.decimal_digits[i]) {
+							dao &= 'FLOAT">';
+						} else {
+							dao &= 'DECIMAL">';
+						}
+						break;
+					case "real":
+						dao &= 'REAL">';
+						break;
+					case "smallint":
+						dao &= 'SMALLINT">';
+						break;
+					case "date":
+						dao &= 'TIMESTAMP">';
+						break;
+					case "time":
+						dao &= 'TIME">';
+						break;
+					case "datetime": case "smalldatetime":
+						dao &= 'TIMESTAMP">';
+						break;
+					case "tinyint":
+						dao &= 'TINYINT">';
+						break;
+					case "varchar": case "nvarchar":
+						dao &= 'VARCHAR">';
+						break;
+					default:
+						dao &= 'VARCHAR">';
+						break;
+				}
+				if (i EQ len(variables.tableColumns.recordCount)) {
+					dao &= chr(10);
+				} else {
+					dao &= ',' & chr(10);
 				}
 			}
-			dao &= chr(9) & chr(9) & "<cfquery name='qRead' result='result'>" & chr(10);
-			dao &= "Select * from " & variables.table;
-			if(sortOrder neq '') {
-				dao &= " order by " & sortOrder;
-			}
-			dao &= chr(10);
-			dao &= chr(9) & chr(9) & "</cfquery>" & chr(10);
-			dao &= chr(9) & chr(9) & "<cfreturn qRead.execute().getResult()>" & chr(10);
-			dao &= chr(9) & "</cffunction>" & chr(10) & chr(10);
-
-			return dao;
 		}
+		dao &= chr(9) & chr(9) & chr(9) & '</cfquery>' & chr(10) & chr(10);
+
+		dao &= chr(9) & chr(9) & chr(9) & '<cfset msg.id = result.rowid>' & chr(10);
+		dao &= chr(9) & chr(9) & chr(9) & '<cfset msg.text = "Record inserted successfully.">' & chr(10);
+		dao &= chr(9) & chr(9) & chr(9) & '<cfset msg.type = "success">' & chr(10);
+
+		dao &= chr(9) & chr(9) & '<cfcatch type="any" name="e">' & chr(10);
+		dao &= chr(9) & chr(9) & chr(9) & '<cfset msg.text = "An error has occured. The record was not inserted">' & chr(10);
+		dao &= chr(9) & chr(9) & chr(9) & '<cfset msg.type = "error">' & chr(10);
+		dao &= chr(9) & chr(9) & chr(9) & '<cfset msg.result = e>' & chr(10);
+		dao &= chr(9) & chr(9) & '</cfcatch>' & chr(10) & chr(10);
+		dao &= chr(9) & chr(9) & '</cftry>' & chr(10) & chr(10);
+
+		dao &= chr(9) & chr(9) & "<cfreturn msg>" & chr(10);
+		dao &= chr(9) & "</cffunction>" & chr(10) & chr(10);
+
+		// Update
+		dao &= chr(9) & '<cffunction name="update">' & chr(10);
+		dao &= chr(9) & chr(9) & '<cfargument name="#variables.table#Bean" required="true" type="model.beans.#variables.table#">' & chr(10) & chr(10);
+		dao &= chr(9) & chr(9) & "<cfset var qUpdate = new Query()>" & chr(10);
+		dao &= chr(9) & chr(9) & "<cfset var result = {}>" & chr(10);
+		dao &= chr(9) & chr(9) & "<cfset var msg = {}>" & chr(10) & chr(10);
+
+		dao &= chr(9) & chr(9) & '<cftry>' & chr(10) & chr(10);
+		dao &= chr(9) & chr(9) & chr(9) & '<cfquery>' & chr(10) & chr(10);
+		dao &= chr(9) & chr(9) & chr(9) & 'UPDATE #variables.table#' & chr(10);
+	   	dao &= chr(9) & chr(9) & chr(9) & 'SET' & chr(10);
+
+		for(i=1;i<=variables.tableColumns.recordCount;i++) {
+			if(variables.tableColumns.is_primarykey[i] eq false) {
+				dao &= chr(9) & chr(9) & chr(9) & chr(9) & '#variables.tableColumns.column_name[i]# = <cfqueryparam value="';
+					if (variables.tableColumns.type_name[i] == "number") {
+					   if (variables.tableColumns.decimal_digits[i]) {
+							dao &= '##val(arguments.bean.get' & capitalizeString(variables.tableColumns.column_name[i]) & '())##"';
+						} else {
+							dao &= '##int(arguments.bean.get' & capitalizeString(variables.tableColumns.column_name[i]) & '())##"';
+						}
+					} else {
+						dao &= '##arguments.bean.get' & capitalizeString(variables.tableColumns.column_name[i]) & '()##"';
+					}
+				dao &= ', cfsqltype="CF_SQL_';
+			switch(variables.tableColumns.type_name[i]) {
+					case "bit":
+						dao &= 'BIT">';
+						break;
+					case "char": case "nchar": case "uniqueidentifier": case "guid":
+						dao &= 'CHAR">';
+						break;
+					case "decimal": case "money": case "smallmoney":
+						dao &= 'DECIMAL">';
+						break;
+					case "float":
+						dao &= 'FLOAT">';
+						break;
+					case "int": case "integer": case "int identity":
+						dao &= 'INTEGER">';
+						break;
+					case "text": case "ntext":
+						dao &= 'LONGVARCHAR">';
+						break;
+					case "number":
+						if (variables.tableColumns.decimal_digits[i]) {
+							dao &= 'DECIMAL">';
+						} else {
+							dao &= 'FLOAT">';
+						}
+						break;
+					case "real":
+						dao &= 'REAL">';
+						break;
+					case "smallint":
+						dao &= 'SMALLINT">';
+						break;
+					case "date":
+						dao &= 'TIMESTAMP">';
+						break;
+					case "time":
+						dao &= 'TIME">';
+						break;
+					case "datetime": case "smalldatetime":
+						dao &= 'TIMESTAMP">';
+						break;
+					case "tinyint":
+						dao &= 'TINYINT">';
+						break;
+					case "varchar": case "nvarchar":
+						dao &= 'VARCHAR">';
+						break;
+					default:
+						dao &= 'VARCHAR">';
+						break;
+				}
+			dao &= ',' & chr(10);
+			}
+		}
+		/*ulist = mid(ulist,1,len(ulist)-3);
+		dao &= ulist & "'" & chr(10);*/
+		dao &= chr(9) & chr(9) & chr(9) & chr(9) & ' where #variables.pkField# = <cfqueryparam value="#variables.pkField#" cfsqltype="CF_SQL_FLOAT">' & chr(10);
+
+		dao &= chr(9) & chr(9) & chr(9) & '</cfquery>' & chr(10) & chr(10);
+
+		dao &= chr(9) & chr(9) & chr(9) & '<cfset msg.text = "Record updated successfully.">' & chr(10);
+		dao &= chr(9) & chr(9) & chr(9) & '<cfset msg.type = "success">' & chr(10);
+		dao &= chr(9) & chr(9) & '<cfcatch type="any" name="e">' & chr(10);
+		dao &= chr(9) & chr(9) & chr(9) & '<cfset msg.text = "An error has occured. The record was not updated.">' & chr(10);
+		dao &= chr(9) & chr(9) & chr(9) & '<cfset msg.type = "error">' & chr(10);
+		dao &= chr(9) & chr(9) & chr(9) & '<cfset msg.result = e;' & chr(10);
+		dao &= chr(9) & chr(9) & "</cfcatch>" & chr(10);
+		dao &= chr(9) & "</cftry>" & chr(10);
+		dao &= chr(9) & "<cfreturn msg>" & chr(10);
+		dao &= chr(9) & "</cffunction>" & chr(10) & chr(10);
+
+		return dao;
+	}
+
+		/*
+--
+		   for(i=1;i<=variables.tableColumns.recordCount;i++) {*/
+			/*dao &= chr(9) & chr(9) & "bean.set" & capitalizeString(variables.tableColumns.column_name[i]) & "( result." & variables.tableColumns.column_name[i] & " );" & chr(10);*/
+		/*}*/
+
+		/*dao &= chr(10);*/
+		/*dao &= chr(9) & chr(9) & "return bean;" & chr(10);*/
+		/*dao &= chr(9) & "}" & chr(10) & chr(10);*/
+			/*return dao;*/
+		/*}*/
 
 	// DAO Script Generator
 	public string function generateDAO() {
