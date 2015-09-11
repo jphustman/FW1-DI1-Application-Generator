@@ -1,4 +1,4 @@
-﻿<div class="sidebar pure-u-1 pure-u-md-1-4">
+﻿<!---<div class="sidebar pure-u-1 pure-u-md-1-4">
 	<div class="header">
 		<hgroup>
 			<h1 class="brand-title">MVC ColdFusion Application Generator</h1>
@@ -17,7 +17,7 @@
 			</ul>
 		</nav>
 	</div>
-</div>
+</div>--->
 
 <div class="content pure-u-1 pure-u-md-3-4">
 	<div>

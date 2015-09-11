@@ -154,34 +154,61 @@ component {
 
 	// Table Config Generator
 	public string function generateBean() {
+		var argIsNumber = false;
 		var qColumns = getColumns(variables.table);
-		var bean = "component accessors=true {" & chr(10);
-		for(i=1;i<=qColumns.recordCount;i++) {
-			var line = chr(9) & "property ";
-			switch(qColumns.type_name[i]) {
-				case "decimal": case "float": case "int": case "money": case "numeric": case "real": case "smallint": case "smallmoney": case "tinyint":
-					line &= "numeric ";
-					break;
-				case "date": case "smalldatetime": case "time": case "datetime":
-					line &= "date ";
-					break;
-				case "bit":
-					line &= "boolean ";
-					break;
-				case "uniqueidentifier":
-					line &= "guid ";
-					break;
-				default:
-					line &= "string ";
-					break;
-			}
-			line &= qColumns.column_name[i] & ";" & chr(10) ;
-			bean &= line;
+		var bean = chr(10) & 'component accessors="true" output="false" {' & chr(10) & chr(10);
+		for (i = 1; i <= qColumns.recordCount; i += 1) {
+			bean &= chr(9) & 'property name="#LCase(qColumns.column_name[i])#";' & chr(10);
 		}
-		bean &= "}";
+		bean &= chr(10) & chr(9) & 'public any function init(' & chr(10);
+		for (i = 1; i <= qColumns.recordCount; i += 1) {
+			bean &= chr(9) & chr(9) & chr(9) & LCase(qColumns.column_name[i]) & ' = ""';
+			if (i != qColumns.recordCount) {
+				bean &= ',';
+			}
+			bean &= chr(10);
+		}
+		bean &= chr(9) & chr(9) & ') {' & chr(10);
+		bean &= chr(10);
+		for (i = 1; i <= qColumns.recordCount; i += 1) {
+			bean &= chr(9) & chr(9) & 'variables.' & LCase(qColumns.column_name[i]) & ' = arguments.' & LCase(qColumns.column_name[i]) & ';' & chr(10);
+		}
+		bean &= chr(10);
+		bean &= chr(9) & chr(9) & 'return this;' & chr(10) & chr(9) & '}' & chr(10) & '}';
 
 		return bean;
+
 	}
+
+	/*public string function generateBean() {*/
+		/*var qColumns = getColumns(variables.table);*/
+		/*var bean = "component accessors=true {" & chr(10);*/
+		/*for(i=1;i<=qColumns.recordCount;i++) {*/
+			/*var line = chr(9) & "property ";*/
+			/*switch(qColumns.type_name[i]) {*/
+				/*case "decimal": case "float": case "int": case "money": case "numeric": case "real": case "smallint": case "smallmoney": case "tinyint":*/
+					/*line &= "numeric ";*/
+					/*break;*/
+				/*case "date": case "smalldatetime": case "time": case "datetime":*/
+					/*line &= "date ";*/
+					/*break;*/
+				/*case "bit":*/
+					/*line &= "boolean ";*/
+					/*break;*/
+				/*case "uniqueidentifier":*/
+					/*line &= "guid ";*/
+					/*break;*/
+				/*default:*/
+					/*line &= "string ";*/
+					/*break;*/
+			/*}*/
+			/*line &= qColumns.column_name[i] & ";" & chr(10) ;*/
+			/*bean &= line;*/
+		/*}*/
+		/*bean &= "}";*/
+
+		/*return bean;*/
+	/*}*/
 
 	// Controller Generator
 	public string function generateController() {
@@ -353,7 +380,7 @@ component {
 		dao &= chr(10);
 
 		//Get Bean by Id
-		dao &= chr(9) & '<cffunction name="getBeanById">' & chr(10);
+		dao &= chr(9) & '<cffunction name="getBeanById" output="false">' & chr(10);
 		dao &= chr(9) & chr(9) & '<cfargument name="id" required="true" type="numeric">' & chr(10);
 
 		dao &= chr(9) & chr(9) & "<cfset var qRead = new query()>" & chr(10);
@@ -375,7 +402,7 @@ component {
 
 
 		// Create
-		dao &= chr(9) & '<cffunction name="create">' & chr(10);
+		dao &= chr(9) & '<cffunction name="create" output="false">' & chr(10);
 		dao &= chr(9) & chr(9) & '<cfargument name="#variables.table#Bean" required="true" type="model.beans.#variables.table#">' & chr(10) & chr(10);
 
 		dao &= chr(9) & chr(9) & "<cfset var qInsert = new Query()>" & chr(10);
@@ -384,6 +411,7 @@ component {
 		dao &= chr(9) & chr(9) & "<cftry>" & chr(10);
 		dao &= chr(9) & chr(9) & chr(9) & '<cfquery name="qInsert" result="result">' & chr(10);
 		dao &= chr(9) & chr(9) & chr(9) & chr(9) & 'INSERT INTO #variables.table# (' & chr(10);
+		dao &= chr(9) & chr(9) & chr(9) & chr(9);
 
 		aList = "";
 		for(i=1;i<=variables.tableColumns.recordCount;i++) {
@@ -393,7 +421,7 @@ component {
 		}
 		aList = mid(aList, 1, len(aList)-1);
 		dao &= aList;
-		dao &= ") VALUES (" & chr(10);
+		dao &= chr(10) & chr(9) & chr(9) & chr(9) & chr(9) & ") VALUES (" & chr(10);
 
 		/*dao &= chr(9) & chr(9) & chr(9) & chr(9) & "& '";
 		bList = "";
@@ -408,7 +436,26 @@ component {
 
 		for(i=1;i<=variables.tableColumns.recordCount;i++) {
 			if(variables.tableColumns.is_primarykey[i] neq "yes"){
-				dao &= chr(9) & chr(9) & chr(9) & '<cfqueryparam value="##arguments.#variables.table#Bean.get' & capitalizeString(variables.tableColumns.column_name[i]) & '()##", cfsqltype="CF_SQL_';
+
+				writeDump(variables.tableColumns.is_nullable[i]);
+				if ((variables.tableColumns.type_name[i] == "number" AND variables.tableColumns.is_nullable[i]) OR variables.tableColumns.type_name[i] == "date") {
+					dao &= chr(9) & chr(9) & chr(9) & '<cfif NOT len(arguments.#variables.table#Bean.get' & capitalizeString(variables.tableColumns.column_name[i]) & '())>' & chr(10);
+					dao &= chr(9) & chr(9) & chr(9) & chr(9) & '<cfqueryparam null="true">,' & chr(10);
+					dao &= chr(9) & chr(9) & chr(9) & '<cfelse>' & chr(10);
+					dao &= chr(9) & chr(9) & chr(9) & chr(9) & '<cfqueryparam value="';
+				} else {
+					dao &= chr(9) & chr(9) & chr(9) & '<cfqueryparam value="';
+				}
+					if (variables.tableColumns.type_name[i] == "number") {
+					   if (variables.tableColumns.decimal_digits[i]) {
+							dao &= '##val(arguments.#variables.table#Bean.get' & capitalizeString(variables.tableColumns.column_name[i]) & '())##"';
+						} else {
+							dao &= '##int(arguments.#variables.table#Bean.get' & capitalizeString(variables.tableColumns.column_name[i]) & '())##"';
+						}
+					} else {
+						dao &= '##arguments.#variables.table#Bean.get' & capitalizeString(variables.tableColumns.column_name[i]) & '()##"';
+					}
+				dao &= ' cfsqltype="CF_SQL_';
 				switch(variables.tableColumns.type_name[i]) {
 					case "bit":
 						dao &= 'BIT">';
@@ -430,9 +477,9 @@ component {
 						break;
 					case "number":
 						if (variables.tableColumns.decimal_digits[i]) {
-							dao &= 'FLOAT">';
-						} else {
 							dao &= 'DECIMAL">';
+						} else {
+							dao &= 'FLOAT">';
 						}
 						break;
 					case "real":
@@ -465,8 +512,12 @@ component {
 				} else {
 					dao &= ',' & chr(10);
 				}
+				if ((variables.tableColumns.type_name[i] == "number" AND variables.tableColumns.is_nullable[i]) OR variables.tableColumns.type_name[i] == "date") {
+					dao &= chr(9) & chr(9) & chr(9) & '</cfif>' & chr(10);
+				}
 			}
 		}
+		dao &= chr(9) & chr(9) & chr(9) & chr(9) & ')' & chr(10);
 		dao &= chr(9) & chr(9) & chr(9) & '</cfquery>' & chr(10) & chr(10);
 
 		dao &= chr(9) & chr(9) & chr(9) & '<cfset msg.id = result.rowid>' & chr(10);
@@ -484,7 +535,7 @@ component {
 		dao &= chr(9) & "</cffunction>" & chr(10) & chr(10);
 
 		// Update
-		dao &= chr(9) & '<cffunction name="update">' & chr(10);
+		dao &= chr(9) & '<cffunction name="update" output="false">' & chr(10);
 		dao &= chr(9) & chr(9) & '<cfargument name="#variables.table#Bean" required="true" type="model.beans.#variables.table#">' & chr(10) & chr(10);
 		dao &= chr(9) & chr(9) & "<cfset var qUpdate = new Query()>" & chr(10);
 		dao &= chr(9) & chr(9) & "<cfset var result = {}>" & chr(10);
@@ -507,7 +558,7 @@ component {
 					} else {
 						dao &= '##arguments.bean.get' & capitalizeString(variables.tableColumns.column_name[i]) & '()##"';
 					}
-				dao &= ', cfsqltype="CF_SQL_';
+				dao &= ' cfsqltype="CF_SQL_';
 			switch(variables.tableColumns.type_name[i]) {
 					case "bit":
 						dao &= 'BIT">';
@@ -570,13 +621,13 @@ component {
 
 		dao &= chr(9) & chr(9) & chr(9) & '<cfset msg.text = "Record updated successfully.">' & chr(10);
 		dao &= chr(9) & chr(9) & chr(9) & '<cfset msg.type = "success">' & chr(10);
-		dao &= chr(9) & chr(9) & '<cfcatch type="any" name="e">' & chr(10);
-		dao &= chr(9) & chr(9) & chr(9) & '<cfset msg.text = "An error has occured. The record was not updated.">' & chr(10);
-		dao &= chr(9) & chr(9) & chr(9) & '<cfset msg.type = "error">' & chr(10);
-		dao &= chr(9) & chr(9) & chr(9) & '<cfset msg.result = e;' & chr(10);
-		dao &= chr(9) & chr(9) & "</cfcatch>" & chr(10);
-		dao &= chr(9) & "</cftry>" & chr(10);
-		dao &= chr(9) & "<cfreturn msg>" & chr(10);
+		dao &= chr(9) & chr(9) & chr(9) & '<cfcatch type="any" name="e">' & chr(10);
+		dao &= chr(9) & chr(9) & chr(9) & chr(9) & '<cfset msg.text = "An error has occured. The record was not updated.">' & chr(10);
+		dao &= chr(9) & chr(9) & chr(9) & chr(9) & '<cfset msg.type = "error">' & chr(10);
+		dao &= chr(9) & chr(9) & chr(9) & chr(9) & '<cfset msg.result = e>' & chr(10);
+		dao &= chr(9) & chr(9) & chr(9) & "</cfcatch>" & chr(10);
+		dao &= chr(9) & chr(9) & "</cftry>" & chr(10);
+		dao &= chr(9) & chr(9) & "<cfreturn msg>" & chr(10);
 		dao &= chr(9) & "</cffunction>" & chr(10) & chr(10);
 
 		return dao;
