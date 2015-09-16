@@ -401,7 +401,7 @@ component {
 		dao &= chr(9) & "</cffunction>" & chr(10) & chr(10);
 
 
-		// Create
+// Create
 		dao &= chr(9) & '<cffunction name="create" output="false">' & chr(10);
 		dao &= chr(9) & chr(9) & '<cfargument name="#variables.table#Bean" required="true" type="model.beans.#variables.table#">' & chr(10) & chr(10);
 
@@ -434,11 +434,15 @@ component {
 		dao &= bList;
 		dao &= ")';" & chr(10);*/
 
+				writeDump(variables.tableColumns);
 		for(i=1;i<=variables.tableColumns.recordCount;i++) {
 			if(variables.tableColumns.is_primarykey[i] neq "yes"){
 
-				writeDump(variables.tableColumns.is_nullable[i]);
-				if ((variables.tableColumns.type_name[i] == "number" AND variables.tableColumns.is_nullable[i]) OR variables.tableColumns.type_name[i] == "date") {
+				if ((variables.tableColumns.type_name[i] == "number" AND
+						   	variables.tableColumns.is_nullable[i]) OR
+						(variables.tableColumns.type_name[i] == "float" AND
+						   	variables.tableColumns.is_nullable[i]) OR
+					   	variables.tableColumns.type_name[i] == "date") {
 					dao &= chr(9) & chr(9) & chr(9) & '<cfif NOT len(arguments.#variables.table#Bean.get' & capitalizeString(variables.tableColumns.column_name[i]) & '())>' & chr(10);
 					dao &= chr(9) & chr(9) & chr(9) & chr(9) & '<cfqueryparam null="true">,' & chr(10);
 					dao &= chr(9) & chr(9) & chr(9) & '<cfelse>' & chr(10);
@@ -446,7 +450,8 @@ component {
 				} else {
 					dao &= chr(9) & chr(9) & chr(9) & '<cfqueryparam value="';
 				}
-					if (variables.tableColumns.type_name[i] == "number") {
+					if (variables.tableColumns.type_name[i] == "number" OR
+							variables.tableColumns.type_name[i] == "float") {
 					   if (variables.tableColumns.decimal_digits[i]) {
 							dao &= '##val(arguments.#variables.table#Bean.get' & capitalizeString(variables.tableColumns.column_name[i]) & '())##"';
 						} else {
@@ -458,61 +463,68 @@ component {
 				dao &= ' cfsqltype="CF_SQL_';
 				switch(variables.tableColumns.type_name[i]) {
 					case "bit":
-						dao &= 'BIT">';
+						dao &= 'BIT" ';
 						break;
 					case "char": case "nchar": case "uniqueidentifier": case "guid":
-						dao &= 'CHAR">';
+						dao &= 'CHAR" ';
 						break;
 					case "decimal": case "money": case "smallmoney":
-						dao &= 'DECIMAL">';
+						dao &= 'DECIMAL" ';
 						break;
 					case "float":
-						dao &= 'FLOAT">';
+						dao &= 'FLOAT" ';
 						break;
 					case "int": case "integer": case "int identity":
-						dao &= 'INTEGER">';
+						dao &= 'INTEGER" ';
 						break;
 					case "text": case "ntext":
-						dao &= 'LONGVARCHAR">';
+						dao &= 'LONGVARCHAR" ';
 						break;
 					case "number":
 						if (variables.tableColumns.decimal_digits[i]) {
-							dao &= 'DECIMAL">';
+							dao &= 'DECIMAL" ';
 						} else {
-							dao &= 'FLOAT">';
+							dao &= 'FLOAT" ';
 						}
 						break;
 					case "real":
-						dao &= 'REAL">';
+						dao &= 'REAL" ';
 						break;
 					case "smallint":
-						dao &= 'SMALLINT">';
+						dao &= 'SMALLINT" ';
 						break;
 					case "date":
-						dao &= 'TIMESTAMP">';
+						dao &= 'TIMESTAMP" ';
 						break;
 					case "time":
-						dao &= 'TIME">';
+						dao &= 'TIME" ';
 						break;
 					case "datetime": case "smalldatetime":
-						dao &= 'TIMESTAMP">';
+						dao &= 'TIMESTAMP" ';
 						break;
 					case "tinyint":
-						dao &= 'TINYINT">';
+						dao &= 'TINYINT" ';
 						break;
 					case "varchar": case "nvarchar":
-						dao &= 'VARCHAR">';
+						dao &= 'VARCHAR" ';
 						break;
 					default:
-						dao &= 'VARCHAR">';
+						dao &= 'VARCHAR" ';
 						break;
 				}
-				if (i EQ len(variables.tableColumns.recordCount)) {
+
+				dao &= 'maxlength="' & variables.tableColumns.column_size[i] & '">';
+
+				if (i EQ variables.tableColumns.recordCount) {
 					dao &= chr(10);
 				} else {
 					dao &= ',' & chr(10);
 				}
-				if ((variables.tableColumns.type_name[i] == "number" AND variables.tableColumns.is_nullable[i]) OR variables.tableColumns.type_name[i] == "date") {
+				if ((variables.tableColumns.type_name[i] == "number" AND
+						   	variables.tableColumns.is_nullable[i]) OR
+						(variables.tableColumns.type_name[i] == "float" AND
+						   	variables.tableColumns.is_nullable[i]) OR
+					   	variables.tableColumns.type_name[i] == "date") {
 					dao &= chr(9) & chr(9) & chr(9) & '</cfif>' & chr(10);
 				}
 			}
@@ -548,77 +560,102 @@ component {
 
 		for(i=1;i<=variables.tableColumns.recordCount;i++) {
 			if(variables.tableColumns.is_primarykey[i] eq false) {
-				dao &= chr(9) & chr(9) & chr(9) & chr(9) & '#variables.tableColumns.column_name[i]# = <cfqueryparam value="';
-					if (variables.tableColumns.type_name[i] == "number") {
-					   if (variables.tableColumns.decimal_digits[i]) {
-							dao &= '##val(arguments.bean.get' & capitalizeString(variables.tableColumns.column_name[i]) & '())##"';
-						} else {
-							dao &= '##int(arguments.bean.get' & capitalizeString(variables.tableColumns.column_name[i]) & '())##"';
-						}
+				if ((variables.tableColumns.type_name[i] == "number" AND
+						   	variables.tableColumns.is_nullable[i]) OR
+						(variables.tableColumns.type_name[i] == "float" AND
+						   	variables.tableColumns.is_nullable[i]) OR
+					   	variables.tableColumns.type_name[i] == "date") {
+					dao &= chr(9) & chr(9) & chr(9) & '<cfif NOT len(arguments.#variables.table#Bean.get' & capitalizeString(variables.tableColumns.column_name[i]) & '())>' & chr(10);
+					dao &= chr(9) & chr(9) & chr(9) & chr(9) & variables.tableColumns.column_name[i] & ' = <cfqueryparam null="true">,' & chr(10);
+					dao &= chr(9) & chr(9) & chr(9) & '<cfelse>' & chr(10);
+				}
+				dao &= chr(9) & chr(9) & chr(9) & chr(9) & variables.tableColumns.column_name[i] & ' = <cfqueryparam value="';
+				if (variables.tableColumns.type_name[i] == "number" OR
+						variables.tableColumns.type_name[i] == "float") {
+					if (variables.tableColumns.decimal_digits[i]) {
+						dao &= '##val(arguments.#variables.table#Bean.get' & capitalizeString(variables.tableColumns.column_name[i]) & '())##"';
 					} else {
-						dao &= '##arguments.bean.get' & capitalizeString(variables.tableColumns.column_name[i]) & '()##"';
+						dao &= '##int(arguments.#variables.table#Bean.get' & capitalizeString(variables.tableColumns.column_name[i]) & '())##"';
 					}
+				} else {
+					dao &= '##arguments.#variables.table#Bean.get' & capitalizeString(variables.tableColumns.column_name[i]) & '()##"';
+				}
 				dao &= ' cfsqltype="CF_SQL_';
 			switch(variables.tableColumns.type_name[i]) {
 					case "bit":
-						dao &= 'BIT">';
+						dao &= 'BIT" ';
 						break;
 					case "char": case "nchar": case "uniqueidentifier": case "guid":
-						dao &= 'CHAR">';
+						dao &= 'CHAR" ';
 						break;
 					case "decimal": case "money": case "smallmoney":
-						dao &= 'DECIMAL">';
+						dao &= 'DECIMAL" ';
 						break;
 					case "float":
-						dao &= 'FLOAT">';
+						dao &= 'FLOAT" ';
 						break;
 					case "int": case "integer": case "int identity":
-						dao &= 'INTEGER">';
+						dao &= 'INTEGER" ';
 						break;
 					case "text": case "ntext":
-						dao &= 'LONGVARCHAR">';
+						dao &= 'LONGVARCHAR" ';
 						break;
 					case "number":
 						if (variables.tableColumns.decimal_digits[i]) {
-							dao &= 'DECIMAL">';
+							dao &= 'DECIMAL" ';
 						} else {
-							dao &= 'FLOAT">';
+							dao &= 'FLOAT" ';
 						}
 						break;
 					case "real":
-						dao &= 'REAL">';
+						dao &= 'REAL" ';
 						break;
 					case "smallint":
-						dao &= 'SMALLINT">';
+						dao &= 'SMALLINT" ';
 						break;
 					case "date":
-						dao &= 'TIMESTAMP">';
+						dao &= 'TIMESTAMP" ';
 						break;
 					case "time":
-						dao &= 'TIME">';
+						dao &= 'TIME" ';
 						break;
 					case "datetime": case "smalldatetime":
-						dao &= 'TIMESTAMP">';
+						dao &= 'TIMESTAMP" ';
 						break;
 					case "tinyint":
-						dao &= 'TINYINT">';
+						dao &= 'TINYINT" ';
 						break;
 					case "varchar": case "nvarchar":
-						dao &= 'VARCHAR">';
+						dao &= 'VARCHAR" ';
 						break;
 					default:
-						dao &= 'VARCHAR">';
+						dao &= 'VARCHAR" ';
 						break;
 				}
-			dao &= ',' & chr(10);
+				dao &= 'maxlength="' & variables.tableColumns.column_size[i] & '">';
+
+				if (i EQ variables.tableColumns.recordCount) {
+					dao &= chr(10);
+				} else {
+					dao &= ',' & chr(10);
+				}
+				if ((variables.tableColumns.type_name[i] == "number" AND
+						   	variables.tableColumns.is_nullable[i]) OR
+						(variables.tableColumns.type_name[i] == "float" AND
+						   	variables.tableColumns.is_nullable[i]) OR
+					   	variables.tableColumns.type_name[i] == "date") {
+					dao &= chr(9) & chr(9) & chr(9) & '</cfif>' & chr(10);
+				}
+
 			}
 		}
 		/*ulist = mid(ulist,1,len(ulist)-3);
 		dao &= ulist & "'" & chr(10);*/
-		dao &= chr(9) & chr(9) & chr(9) & chr(9) & ' where #variables.pkField# = <cfqueryparam value="#variables.pkField#" cfsqltype="CF_SQL_FLOAT">' & chr(10);
+		dao &= chr(9) & chr(9) & chr(9) & chr(9) & ' where #variables.pkField# = <cfqueryparam value="##int(arguments.#variables.table#Bean.get#variables.pkField#())##" cfsqltype="CF_SQL_FLOAT">' & chr(10);
 
 		dao &= chr(9) & chr(9) & chr(9) & '</cfquery>' & chr(10) & chr(10);
 
+		dao &= chr(9) & chr(9) & chr(9) & '<cfset msg.id = ##arguments.#variables.table#Bean.get#variables.pkField#()##>' & chr(10);
 		dao &= chr(9) & chr(9) & chr(9) & '<cfset msg.text = "Record updated successfully.">' & chr(10);
 		dao &= chr(9) & chr(9) & chr(9) & '<cfset msg.type = "success">' & chr(10);
 		dao &= chr(9) & chr(9) & chr(9) & '<cfcatch type="any" name="e">' & chr(10);
