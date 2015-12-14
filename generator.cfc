@@ -353,10 +353,10 @@ component {
 
 	// DAO Tag Generator
 	public string function generateTagDAO() {
-		var dao = "<cfcomponent accessors='true' output='false'>";
+		var dao = '<cfcomponent accessors="true" output="false">' & chr(10);
 
 		// Get All
-		dao &= chr(9) & "<cffunction name='getAll' output='false'>" & chr(10);
+		dao &= chr(9) & '<cffunction name="getAll" output="false" returnType="query">' & chr(10);
 		dao &= chr(9) & chr(9) & "<cfset var qRead = new Query()>" & chr(10);
 		dao &= chr(9) & chr(9) & "<cfset var result = {}>" & chr(10);
 		var sortOrder = '';
@@ -369,13 +369,13 @@ component {
 			}
 		}
 		dao &= chr(9) & chr(9) & "<cfquery name='qRead' result='result'>" & chr(10);
-		dao &= "Select * from " & variables.table;
+		dao &= chr(9) & chr(9) & chr(9) & "Select * from " & variables.table;
 		if(sortOrder neq '') {
 			dao &= " order by " & sortOrder;
 		}
 		dao &= chr(10);
 		dao &= chr(9) & chr(9) & "</cfquery>" & chr(10);
-		dao &= chr(9) & chr(9) & "<cfreturn qRead.execute().getResult()>" & chr(10);
+		dao &= chr(9) & chr(9) & "<cfreturn qRead>" & chr(10);
 		dao &= chr(9) & "</cffunction>" & chr(10) & chr(10);
 		dao &= chr(10);
 
@@ -537,7 +537,7 @@ component {
 		dao &= chr(9) & chr(9) & chr(9) & '<cfset msg.type = "success">' & chr(10);
 
 		dao &= chr(9) & chr(9) & '<cfcatch type="any" name="e">' & chr(10);
-		dao &= chr(9) & chr(9) & chr(9) & '<cfset msg.text = "An error has occured. The record was not inserted">' & chr(10);
+		dao &= chr(9) & chr(9) & chr(9) & '<cfset msg.text = "An error has occurred. The record was not inserted">' & chr(10);
 		dao &= chr(9) & chr(9) & chr(9) & '<cfset msg.type = "error">' & chr(10);
 		dao &= chr(9) & chr(9) & chr(9) & '<cfset msg.result = e>' & chr(10);
 		dao &= chr(9) & chr(9) & '</cfcatch>' & chr(10) & chr(10);
@@ -659,13 +659,99 @@ component {
 		dao &= chr(9) & chr(9) & chr(9) & '<cfset msg.text = "Record updated successfully.">' & chr(10);
 		dao &= chr(9) & chr(9) & chr(9) & '<cfset msg.type = "success">' & chr(10);
 		dao &= chr(9) & chr(9) & chr(9) & '<cfcatch type="any" name="e">' & chr(10);
-		dao &= chr(9) & chr(9) & chr(9) & chr(9) & '<cfset msg.text = "An error has occured. The record was not updated.">' & chr(10);
+		dao &= chr(9) & chr(9) & chr(9) & chr(9) & '<cfset msg.text = "An error has occurred. The record was not updated.">' & chr(10);
 		dao &= chr(9) & chr(9) & chr(9) & chr(9) & '<cfset msg.type = "error">' & chr(10);
 		dao &= chr(9) & chr(9) & chr(9) & chr(9) & '<cfset msg.result = e>' & chr(10);
 		dao &= chr(9) & chr(9) & chr(9) & "</cfcatch>" & chr(10);
 		dao &= chr(9) & chr(9) & "</cftry>" & chr(10);
 		dao &= chr(9) & chr(9) & "<cfreturn msg>" & chr(10);
 		dao &= chr(9) & "</cffunction>" & chr(10) & chr(10);
+
+
+		// Delete
+		dao &= chr(9) & '<cffunction name="delete" output="false">' & chr(10);
+		dao &= chr(9) & chr(9) & '<cfargument name="bean" required="true">' & chr(10) & chr(10);
+		dao &= chr(9) & chr(9) & "<cftry>" & chr(10);
+
+		dao &= chr(9) & chr(9) & chr(9) & "<cfset var qDelete = new query()>" & chr(10);
+		/*dao &= chr(9) & chr(9) & chr(9) & "qDelete.setDatasource(Application.Datasource);" & chr(10) & chr(10);*/
+
+		dao &= chr(9) & chr(9) & chr(9) & '<cfquery name="qDelete">' & chr(10);
+		dao &= chr(9) & chr(9) & chr(9) & chr(9) & 'Delete from #variables.table#' & chr(10);
+	   	dao &= chr(9) & chr(9) & chr(9) & chr(9) & 'where #variables.pkField# = <cfqueryparam value="##arguments.bean.get' & capitalizeString(variables.pkField) & '()##" cfsqltype="CF_SQL_';
+
+		for(i=1;i<=variables.tableColumns.recordCount;i++) {
+			if(variables.tableColumns.Is_PrimaryKey[i]){
+				switch(variables.tableColumns.type_name[i]) {
+					case "bit":
+						dao &= 'BIT">' & chr(10);
+						break;
+					case "char": case "nchar": case "uniqueidentifier": case "guid":
+						dao &= 'CHAR">' & chr(10);
+						break;
+					case "decimal": case "money": case "smallmoney":
+						dao &= 'DECIMAL">' & chr(10);
+						break;
+					case "float":
+						dao &= 'FLOAT">' & chr(10);
+						break;
+					case "int": case "integer": case "int identity":
+						dao &= 'INTEGER">' & chr(10);
+						break;
+					case "text": case "ntext":
+						dao &= 'LONGVARCHAR">' & chr(10);
+						break;
+					case "numeric":
+						dao &= 'NUMERIC">' & chr(10);
+						break;
+					case "real":
+						dao &= 'REAL">' & chr(10);
+						break;
+					case "smallint":
+						dao &= 'SMALLINT">' & chr(10);
+						break;
+					case "date":
+						dao &= 'DATE">' & chr(10);
+						break;
+					case "time":
+						dao &= 'TIME">' & chr(10);
+						break;
+					case "datetime": case "smalldatetime":
+						dao &= 'TIMESTAMP">' & chr(10);
+						break;
+					case "tinyint":
+						dao &= 'TINYINT">' & chr(10);
+						break;
+					case "varchar": case "nvarchar":
+						dao &= 'VARCHAR">' & chr(10);
+						break;
+					default:
+						dao &= 'VARCHAR">' & chr(10);
+						break;
+				}
+			}
+		}
+		dao &= chr(9) & chr(9) & chr(9) & '</cfquery>' & chr(10);
+
+		dao &= chr(9) & chr(9) & chr(9) & "<cfset var msg.text = 'Record deleted successfully.'>" & chr(10);
+		dao &= chr(9) & chr(9) & chr(9) & "<cfset var msg.type = 'success'>" & chr(10);
+		dao &= chr(9) & chr(9) & chr(9) & "<cfreturn msg>" & chr(10);
+		dao &= chr(9) & chr(9) & '<cfcatch type="any">' & chr(10);
+		dao &= chr(9) & chr(9) & chr(9) & "<cfset var msg.text = 'An error has occurred. The record was not deleted'>" & chr(10);
+		dao &= chr(9) & chr(9) & chr(9) & "<cfset var msg.type = 'error'>" & chr(10);
+		dao &= chr(9) & chr(9) & chr(9) & "<cfset var msg.result = ##cfcatch##>" & chr(10);
+		dao &= chr(9) & chr(9) & chr(9) & "<cfreturn msg>" & chr(10);
+		dao &= chr(9) & chr(9) & "</cfcatch>" & chr(10);
+		dao &= chr(9) & chr(9) &  "</cftry>" & chr(10);
+		dao &= chr(9) & "</cffunction>" & chr(10) & chr(10);
+
+		// Create GUID
+		dao &= chr(9) & '<cffunction name="createSQLUUID" type="private" returnType="string">' & chr(10);
+		dao &= chr(9) & chr(9) & "<cfset var uuid = createUUID()>" & chr(10);
+		dao &= chr(9) & chr(9) & '<cfreturn left(uuid, 23) & "-" & right(uuid, 12)>' & chr(10);
+		dao &= chr(9) & "</cffunction>" & chr(10);
+
+		dao &= "</cfcomponent>";
 
 		return dao;
 	}
@@ -897,7 +983,7 @@ component {
 		dao &= chr(9) & chr(9) & chr(9) & "var msg.type = 'success';" & chr(10);
 		dao &= chr(9) & chr(9) & chr(9) & "return msg;" & chr(10);
 		dao &= chr(9) & chr(9) & "} catch (any e) {" & chr(10);
-		dao &= chr(9) & chr(9) & chr(9) & "var msg.text = 'An error has occured. The record was not inserted';" & chr(10);
+		dao &= chr(9) & chr(9) & chr(9) & "var msg.text = 'An error has occurred. The record was not inserted';" & chr(10);
 		dao &= chr(9) & chr(9) & chr(9) & "var msg.type = 'error';" & chr(10);
 		dao &= chr(9) & chr(9) & chr(9) & "var msg.result = e;" & chr(10);
 		dao &= chr(9) & chr(9) & chr(9) & "return msg;" & chr(10);
@@ -980,7 +1066,7 @@ component {
 		dao &= chr(9) & chr(9) & chr(9) & "var msg.type = 'success';" & chr(10);
 		dao &= chr(9) & chr(9) & chr(9) & "return msg;" & chr(10);
 		dao &= chr(9) & chr(9) & "} catch (any e) {" & chr(10);
-		dao &= chr(9) & chr(9) & chr(9) & "var msg.text = 'An error has occured. The record was not updated.';" & chr(10);
+		dao &= chr(9) & chr(9) & chr(9) & "var msg.text = 'An error has occurred. The record was not updated.';" & chr(10);
 		dao &= chr(9) & chr(9) & chr(9) & "var msg.type = 'error';" & chr(10);
 		dao &= chr(9) & chr(9) & chr(9) & "var msg.result = e;" & chr(10);
 		dao &= chr(9) & chr(9) & chr(9) & "return msg;" & chr(10);
@@ -1054,7 +1140,7 @@ component {
 		dao &= chr(9) & chr(9) & chr(9) & "var msg.type = 'success';" & chr(10);
 		dao &= chr(9) & chr(9) & chr(9) & "return msg;" & chr(10);
 		dao &= chr(9) & chr(9) & "} catch (any e) {" & chr(10);
-		dao &= chr(9) & chr(9) & chr(9) & "var msg.text = 'An error has occured. The record was not deleted';" & chr(10);
+		dao &= chr(9) & chr(9) & chr(9) & "var msg.text = 'An error has occurred. The record was not deleted';" & chr(10);
 		dao &= chr(9) & chr(9) & chr(9) & "var msg.type = 'error';" & chr(10);
 		dao &= chr(9) & chr(9) & chr(9) & "var msg.result = e;" & chr(10);
 		dao &= chr(9) & chr(9) & chr(9) & "return msg;" & chr(10);
