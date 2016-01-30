@@ -309,7 +309,7 @@ component {
 		service &= chr(9) & chr(9) & "return this;" & chr(10);
 		service &= chr(9) & "}" & chr(10) & chr(10);*/
 
-		service &= chr(9) & '<cffunction name="getAll()">' & chr(10);
+		service &= chr(9) & '<cffunction name="getAll">' & chr(10);
 		service &= chr(9) & chr(9) & '<cfreturn get' & capitalizeString(dao) & '().getAll()>' & chr(10);
 		service &= chr(9) & '</cffunction>' & chr(10) & chr(10);
 
@@ -317,14 +317,38 @@ component {
 		/*service &= chr(9) & chr(9) & "return get" & capitalizeString(dao) & "().getAll();" & chr(10);*/
 		/*service &= chr(9) & "}" & chr(10) & chr(10);*/
 
-		service &= chr(9) & "function getBeanById( required any id ) {" & chr(10);
+		service &= chr(9) & '<cffunction name="getBeanById">' & chr(10);
+	   	service &= chr(9) & chr(9) & '<cfargument name="id" type="numeric" required="true">' & chr(10);
+		service &= chr(9) & chr(9) & "<cfreturn get" & capitalizeString(dao) & "().getBeanById( id );" & chr(10);
+		service &= chr(9) & '</cffunction>' & chr(10) & chr(10);
+
+		/*service &= chr(9) & "function getBeanById( required any id ) {" & chr(10);
 		service &= chr(9) & chr(9) & "return get" & capitalizeString(dao) & "().getBeanById( id );" & chr(10);
-		service &= chr(9) & "}" & chr(10) & chr(10);
+		service &= chr(9) & "}" & chr(10) & chr(10);*/
 
-		service &= chr(9) & "function getQueryBy( required struct rc ) {" & chr(10);
+		service &= chr(9) & '<cffunction name="getQueryBy">' & chr(10);
+		service &= chr(9) & chr(9) & '<cfargument name="col" type="string" required="true">' & chr(10);
+		service &= chr(9) & chr(9) & '<cfreturn get' & capitalizeString(dao) & '().getQueryBy( argumentCollection=arguments.col )>' & chr(10);
+		service &= chr(9) & "</cffunction>" & chr(10) & chr(10);
+
+		/*service &= chr(9) & "function getQueryBy( required struct rc ) {" & chr(10);
 		service &= chr(9) & chr(9) & "return get" & capitalizeString(dao) & "().getQueryBy( argumentCollection=arguments.rc );" & chr(10);
-		service &= chr(9) & "}" & chr(10) & chr(10);
+		service &= chr(9) & "}" & chr(10) & chr(10);*/
 
+		service &= chr(9) & '<cffunction name="create">' & chr(10);
+		service &= chr(9) & chr(9) & '<cfargument name="rc" required="true" type="struct">' & chr(10) & chr(10);
+		service &= chr(9) & chr(9) & '<cfset var bean = new model.beans.' & variables.table & '()>' & chr(10) & chr(10);
+
+		for(i=1;i<=variables.tableColumns.recordCount;i++) {
+			if(variables.tableColumns.is_primarykey[i] neq "yes"){
+				service &= chr(9) & chr(9) & "<cfset bean.set" & capitalizeString(variables.tableColumns.column_name[i]) & "( rc." & variables.tableColumns.column_name[i] & " )>" & chr(10);
+			}
+		}
+
+		service &= chr(10);
+		service &= chr(9) & chr(9) & "<cfreturn get" & capitalizeString(dao) & "().create( bean )>" & chr(10);
+		service &= chr(9) & "</cffunction>" & chr(10) & chr(10);
+/*
 		service &= chr(9) & "function create( required struct rc ) {" & chr(10);
 		service &= chr(9) & chr(9) & "var bean = variables.beanFactory.getBean( '" & variables.table &"' );" & chr(10) & chr(10);
 
@@ -337,8 +361,11 @@ component {
 		service &= chr(10);
 		service &= chr(9) & chr(9) & "return get" & capitalizeString(dao) & "().create( bean );" & chr(10);
 		service &= chr(9) & "}" & chr(10) & chr(10);
+*/
 
-		service &= chr(9) & "function update( required struct rc ) {" & chr(10);
+
+
+		/*service &= chr(9) & "function update( required struct rc ) {" & chr(10);
 		service &= chr(9) & chr(9) & "var bean = variables.beanFactory.getBean('" & variables.table &"' );" & chr(10);
 
 		for(i=1;i<=variables.tableColumns.recordCount;i++) {
@@ -347,13 +374,18 @@ component {
 
 		service &= chr(10);
 		service &= chr(9) & chr(9) & "return get" & capitalizeString(dao) & "().update( bean );" & chr(10);
-		service &= chr(9) & "}" & chr(10) & chr(10);
+		service &= chr(9) & "}" & chr(10) & chr(10);*/
 
-		service &= chr(9) & "function delete( required any bean ) {" & chr(10);
+		service &= chr(9) & '<cffunction name="dodelete">' & chr(10);
+		service &= chr(9) & chr(9) & '<cfargument name="bean" required="true" type="model.beans.' & dao & '">' & chr(10);
+		service &= chr(9) & chr(9) & "<cfreturn get" & dao & "().delete( bean )>" & chr(10);
+		service &= chr(9) & "</cffunction>" & chr(10);
+
+		/*service &= chr(9) & "function delete( required any bean ) {" & chr(10);
 		service &= chr(9) & chr(9) & "return get" & dao & "().delete( bean );" & chr(10);
-		service &= chr(9) & "}" & chr(10);
+		service &= chr(9) & "}" & chr(10);*/
 
-		service &= "}";
+		service &= '</cffunction';
 
 		return service;
 	}

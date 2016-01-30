@@ -130,6 +130,17 @@
 						</cfoutput>
 					</div>
 
+					<div id="tabs-service-tag">
+						<cfset getService = generator.generateTagService()>
+						<cfoutput>
+							<span style="color:##000099; font-weight:bold;">
+								Click inside code box to select all
+							</span>
+							<textarea style="font-size: 8pt; width: 100%;"
+							          wrap="hard" rows="33" name="linkNode">#getService#</textarea>
+						</cfoutput>
+					</div>
+
 					<div id="tabs-dao">
 						<cfset getDAO = generator.generateDAO()>
 						<cfoutput>
