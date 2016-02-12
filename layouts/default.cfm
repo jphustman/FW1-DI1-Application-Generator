@@ -27,7 +27,7 @@
 </head>
 
 <body>
-<div id="layout" class="pure-g">
+<div id="layout">
 	<cfoutput>#body#</cfoutput>
 </div>
 

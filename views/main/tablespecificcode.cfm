@@ -9,9 +9,9 @@
 				Generated Output
 			</h2>
 		</header>
-		<cfset generator = CreateObject("component", "generator").init(dsn=#rc.dsn#,
-		                                                               siteTitle=#rc.siteTitle#,
-		                                                               table=#rc.table#)/>
+
+		<cfset generator = new generator(dsn=#rc.dsn#, siteTitle=#rc.siteTitle#, table=#rc.table#) />
+
 		<cfset tableColumns = generator.getColumns(rc.table)>
 
 		<div id="accordion">
@@ -24,75 +24,47 @@
 					<ul>
 						<cfoutput>
 							<li>
-								<a href="##tabs-structure">
-									Table Structure
-								</a>
+								<a href="##tabs-structure">Table Structure</a>
 							</li>
 							<li>
-								<a href="##tabs-bean">
-									#rc.table#.cfc (bean)
-								</a>
+								<a href="##tabs-bean">#rc.table#.cfc (bean)</a>
 							</li>
 							<li>
-								<a href="##tabs-controller">
-									#rc.table#.cfc (controller)
-								</a>
+								<a href="##tabs-controller">#rc.table#.cfc (controller)</a>
 							</li>
 							<li>
-								<a href="##tabs-service">
-									#rc.table#Service.cfc
-								</a>
+								<a href="##tabs-service">#rc.table#Service.cfc</a>
 							</li>
 							<li>
-								<a href="##tabs-dao">
-									#rc.table#DAO.cfc
-								</a>
+								<a href="##tabs-dao">#rc.table#DAO.cfc</a>
+							</li>
+							<li>
+								<a href="##tabs-gateway">#rc.table#Gateway.cfc</a>
 							</li>
 						</cfoutput>
 					</ul>
 
 					<div id="tabs-structure">
-						<table id="tableData" class="display" border="0" cellpadding="5"
-						       cellspacing="0">
+						<table id="tableData" class="display" border="0" cellpadding="5" cellspacing="0">
 							<thead>
 								<tr>
-									<th>
-										Column Name
-									</th>
-									<th>
-										Data Type
-									</th>
-									<th>
-										Column Size
-									</th>
-									<th>
-										Is Nullable
-									</th>
-									<th>
-										Is Primary Key
-									</th>
+									<th>Column Name</th>
+									<th>Data Type</th>
+									<th>Column Size</th>
+									<th>Is Nullable</th>
+									<th>Is Primary Key</th>
 								</tr>
 							</thead>
 							<tbody>
-								<cfoutput query="tableColumns">
-									<tr>
-										<td>
-											#column_name#
-										</td>
-										<td>
-											#type_name#
-										</td>
-										<td>
-											#column_size#
-										</td>
-										<td>
-											#is_nullable#
-										</td>
-										<td>
-											#is_primarykey#
-										</td>
-									</tr>
-								</cfoutput>
+							<cfoutput query="tableColumns">
+								<tr>
+									<td>#column_name#</td>
+									<td>#type_name#</td>
+									<td>#column_size#</td>
+									<td>#is_nullable#</td>
+									<td>#is_primarykey#</td>
+								</tr>
+							</cfoutput>
 							</tbody>
 						</table>
 					</div>
@@ -104,7 +76,7 @@
 								Click inside code box to select all
 							</span>
 							<textarea style="font-size: 8pt; width: 100%;"
-							          wrap="hard" rows="33" name="linkNode">#getBean#</textarea>
+								wrap="hard" rows="33" name="linkNode">#getBean#</textarea>
 						</cfoutput>
 					</div>
 
@@ -115,7 +87,7 @@
 								Click inside code box to select all
 							</span>
 							<textarea style="font-size: 8pt; width: 100%;"
-							          wrap="hard" rows="33" name="linkNode">#getController#</textarea>
+								wrap="hard" rows="33" name="linkNode">#getController#</textarea>
 						</cfoutput>
 					</div>
 
@@ -126,18 +98,15 @@
 								Click inside code box to select all
 							</span>
 							<textarea style="font-size: 8pt; width: 100%;"
-							          wrap="hard" rows="33" name="linkNode">#getService#</textarea>
+								wrap="hard" rows="33" name="linkNode">#getService#</textarea>
 						</cfoutput>
-					</div>
-
-					<div id="tabs-service-tag">
 						<cfset getService = generator.generateTagService()>
 						<cfoutput>
 							<span style="color:##000099; font-weight:bold;">
 								Click inside code box to select all
 							</span>
 							<textarea style="font-size: 8pt; width: 100%;"
-							          wrap="hard" rows="33" name="linkNode">#getService#</textarea>
+								wrap="hard" rows="33" name="linkNode">#getService#</textarea>
 						</cfoutput>
 					</div>
 
@@ -148,20 +117,30 @@
 								Click inside code box to select all
 							</span>
 							<textarea style="font-size: 8pt; width: 100%;"
-							          wrap="hard" rows="33" name="linkNode">#getDAO#</textarea>
+								wrap="hard" rows="33" name="linkNode">#getDAO#</textarea>
 						</cfoutput>
-					</div>
 
-					<div id="tabs-dao-tag">
 						<cfset getDAO = generator.generateTagDAO()>
 						<cfoutput>
 							<span style="color:##000099; font-weight:bold;">
 								Click inside code box to select all
 							</span>
 							<textarea style="font-size: 8pt; width: 100%;"
-							          wrap="hard" rows="33" name="linkNode">#getDAO#</textarea>
+								wrap="hard" rows="33" name="linkNode">#getDAO#</textarea>
 						</cfoutput>
 					</div>
+
+					<div id="tabs-gateway">
+						<cfset getGateway = generator.generateTagGateway()>
+						<cfoutput>
+							<span style="color:##000099; font-weight:bold;">
+								Click inside code box to select all
+							</span>
+							<textarea style="font-size: 8pt; width: 100%;"
+								wrap="hard" rows="33" name="linkNode">#getGateway#</textarea>
+						</cfoutput>
+					</div>
+
 				</div>
 			</div>
 

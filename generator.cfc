@@ -1,3 +1,6 @@
+/**
+ * I generate the code presented to the user.
+ */
 component {
 
 	// constructor
@@ -8,7 +11,7 @@ component {
 		variables.siteTitle = arguments.siteTitle;
 		if(structKeyExists(arguments, 'tables')) {
 			variables.tables = arguments.tables;
-		}
+		};
 		if(structKeyExists(arguments, 'table')) {
 			variables.table = arguments.table;
 			variables.tableColumns = getColumns(variables.table);
@@ -18,9 +21,9 @@ component {
 					var variables.pkField = variables.tableColumns.column_name[i];
 				}
 			}
-		}
+		};
 
-		variables.nounForms = CreateObject("component", "nounForms").init();
+		variables.nounForms = new nounForms().init();
 
 		variables.apos = "'";
 		variables.quot = '"';
@@ -43,9 +46,31 @@ component {
 		return new dbinfo(datasource=variables.dsn).columns(table=arguments.table);
 	}
 
+	// Get Column Type
+	public string function queryParamColumnType(required string typeName) {
+		if (typeName EQ "number" || typeName EQ "float" ) {
+			var thisType = 'numeric';
+		} else if (typeName EQ "date") {
+			var thisType = 'date';
+		} else {
+			var thisType = 'string';
+		}
+	}
+
+	public string function argumentColumnType(required string typeName) {
+		if (typeName EQ "number" || typeName EQ "float" ) {
+			var thisType = 'numeric';
+		} else if (typeName EQ "date") {
+			var thisType = 'date';
+		} else {
+			var thisType = 'string';
+		}
+	}
+
 	// Capitalize first letter of a string
 	public string function capitalizeString( required string s ) {
-		return ReReplace(s,"\b(\w)","\u\1");
+		var thisString = LCase(s); // Lowercase first!
+		return ReReplace(thisString,"\b(\w)","\u\1");
 	}
 
 	// Break string into words by capitol letter
@@ -283,13 +308,13 @@ component {
 		controller &= chr(9) & chr(9) & "}" & chr(10);
 		controller &= chr(9) & "}" & chr(10) & chr(10);
 
-	controller &= chr(9) & "public void function delete( rc ) {" & chr(10);
-	controller &= chr(9) & chr(9) & "var bean = " & serviceCall & ".getBeanById(rc." & variables.pkField & ");" & chr(10);
-	controller &= chr(9) & chr(9) & "rc.msg = " & serviceCall & ".delete( bean );" & chr(10);
-	controller &= chr(9) & chr(9) & "variables.fw.redirect( '" & variables.table & ".home' );" & chr(10);
-	controller &= chr(9) & "}" & chr(10);
+		controller &= chr(9) & "public void function delete( rc ) {" & chr(10);
+		controller &= chr(9) & chr(9) & "var bean = " & serviceCall & ".getBeanById(rc." & variables.pkField & ");" & chr(10);
+		controller &= chr(9) & chr(9) & "rc.msg = " & serviceCall & ".delete( bean );" & chr(10);
+		controller &= chr(9) & chr(9) & "variables.fw.redirect( '" & variables.table & ".home' );" & chr(10);
+		controller &= chr(9) & "}" & chr(10);
 
-	controller &= "}";
+		controller &= "}";
 
 		return controller;
 	}
@@ -298,99 +323,158 @@ component {
 // Service Tag Generator
 ///////////////////////////////////////////////////////////////////////////////
 	public string function generateTagService() {
-		dao = variables.table & "DAO";
+		var dao = variables.table & "DAO";
+		var qColumns = getColumns(variables.table);
 
-		var service = '<cfcomponent accessors="true">' & chr(10) & chr(10);
+		var service = '<cfcomponent displayName="#capitalizeString(variables.table)#Service" output="false"' & chr(10);
+	   	service &= '	hint="I am the #capitalizeString(variables.table)#Service Class used to interact with the #capitalizeString(variables.table)# package.">' & chr(10) & chr(10);
 
-		/*service &= chr(9) & "property " & dao & ";" & chr(10) & chr(10);*/
+		service &= '	<cfset init()>' & chr(10) & chr(10);
 
-		/*service &= chr(9) & "function init( beanFactory ) {" & chr(10);
-		service &= chr(9) & chr(9) & "variables.beanFactory = beanFactory;" & chr(10);
-		service &= chr(9) & chr(9) & "return this;" & chr(10);
-		service &= chr(9) & "}" & chr(10) & chr(10);*/
+		service &= '	<cffunction name="init" access="public" output="false" returnType="struct">' & chr(10);
+		service &= '		hint="I am the constructor for the #capitalizeString(variables.table)# class.">' & chr(10) & chr(10);
+		service &= '		<cfset variables.instance.#Lcase(variables.table)#Dao = new model.dao.#capitalizeString(variables.table)#().init()>' & chr(10);
+		service &= '		<cfset variables.instance.#Lcase(variables.table)#Gateway = new model.gateway.#capitalizeString(variables.table)#().init()>' & chr(10) & chr(10);
+		service &= '		<cfreturn this>' & chr(10);
+		service &= '	</cffunction>' & chr(10) & chr(10);
 
-		service &= chr(9) & '<cffunction name="getAll">' & chr(10);
-		service &= chr(9) & chr(9) & '<cfreturn get' & capitalizeString(dao) & '().getAll()>' & chr(10);
-		service &= chr(9) & '</cffunction>' & chr(10) & chr(10);
 
-		/*service &= chr(9) & "function getAll() {" & chr(10);*/
-		/*service &= chr(9) & chr(9) & "return get" & capitalizeString(dao) & "().getAll();" & chr(10);*/
+		service &= '	<!--- Crud Methods --->' & chr(10) & chr(10);
+		service &= '	<cffunction name="save" access="public" output="false"' & chr(10);
+		service &= '		hint="I save or update a #capitalizeString(variables.table)# into the database">' & chr(10);
+		service &= '		<cfargument name="#LCase(variables.table)#" required="true" type="model.beans.#capitalizeString(variables.table)#" hint="I am the #capitalizeString(variables.table)# bean.">' & chr(10);
+		service &= '		<cfreturn variables.instance.#LCase(variables.table)#Dao.save#capitalizeString(variables.table)#(arguments.#LCase(variables.table)#)>' & chr(10);
+		service &= '	</cffunction>' & chr(10) & chr(10);
+
+		service &= '	<cffunction name="read" access="public" output="false"' & chr(10);
+		service &= '		hint="I obtain details for a specific #capitalizeString(variables.table)# from the database.">' & chr(10);
+		service &= '		<cfargument name="#LCase(variables.table)#ID" required="true" type="numeric" hint="I am the ID of the #LCase(variables.table)# you wish to search for.">' & chr(10);
+		service &= '		<cfreturn variables.instance.#LCase(variables.table)#Dao.get#capitalizeString(variables.table)#ByID(arguments.#LCase(variables.table)#ID)>' & chr(10);
+		service &= '	</cffunction>' & chr(10) & chr(10);
+
+		service &= '	<cffunction name="delete" access="public" output="false"' & chr(10);
+		service &= '		hint="I delete a specific #capitalizeString(variables.table)# from the database.">' & chr(10);
+		service &= '		<cfargument name="#LCase(variables.table)#ID" required="true" type="numeric" hint="I am the ID of the #LCase(variables.table)# you wish to delete.">' & chr(10);
+		service &= '		<cfreturn variables.instance.#LCase(variables.table)#Dao.delete#capitalizeString(variables.table)#ByID(arguments.#LCase(variables.table)#ID)>' & chr(10);
+		service &= '	</cffunction>' & chr(10) & chr(10);
+
+		service &= '	<!--- Gateway Methods --->' & chr(10);
+		service &= '	<cffunction name="getAll#capitalizeString(variables.table)#" access="remote" output="false"' & chr(10);
+		service &= '		hint="I run a query of all the #capitalizeString(variables.table)#s within the database table.">' & chr(10);
+		service &= '		<cfreturn variables.instance.#LCase(variables.table)#Gateway.getAll#capitalizeString(variables.table)#()>' & chr(10);
+		service &= '	</cffunction>' & chr(10) & chr(10);
+
+		for (i = 1; i <= qColumns.recordCount; i += 1) {
+
+			var columnType = argumentColumnType(qColumns.type_name[i]);
+
+			service &= '	<cffunction name="filterBy#capitalizeString(qColumns.column_name[i])#" access="remote" output="false"' & chr(10);
+			service &= '		hint="I run a query of all the #capitalizeString(variables.table)#s within the database table based upon a required filter.">' & chr(10);
+			service &= '		<cfargument name="#LCase(qColumns.column_name[i])#Filter" required="true" type="#columnType#" hint="I am the #LCase(qColumns.column_name[i])# to filter.">' & chr(10) & chr(10);
+
+			service &= '		<!--- Create and populate a structure object containing the filter to pass through. --->' & chr(10);
+			service &= '		<cfset var stuFilter = {' & chr(10);
+				service &= '			#LCase(qColumns.column_name[i])# = arguments.#LCase(qColumns.column_name[i])#' & chr(10);
+				service &= '		}>' & chr(10) & chr(10);
+
+			service &= '		<!--- Send the structure into the query method and return the query object. --->' & chr(10);
+
+			service &= '		<cfreturn variables.instance.#LCase(variables.table)#Gateway.getAll#capitalizeString(variables.table)#(stuFilter)>' & chr(10);
+			service &= '	</cffunction>' & chr(10) & chr(10);
+
+		}
+
+		service &= '</cfcomponent>';
+
+
+		/*[>service &= chr(9) & "property " & dao & ";" & chr(10) & chr(10);<]*/
+
+		/*/*service &= chr(9) & "function init( beanFactory ) {" & chr(10);*/
+		/*service &= chr(9) & chr(9) & "variables.beanFactory = beanFactory;" & chr(10);*/
+		/*service &= chr(9) & chr(9) & "return this;" & chr(10);*/
+		/*service &= chr(9) & "}" & chr(10) & chr(10);<]*/
+
+		/*service &= chr(9) & '<cffunction name="getAll">' & chr(10);*/
+		/*service &= chr(9) & chr(9) & '<cfreturn get' & capitalizeString(dao) & '().getAll()>' & chr(10);*/
+		/*service &= chr(9) & '</cffunction>' & chr(10) & chr(10);*/
+
+		/*[>service &= chr(9) & "function getAll() {" & chr(10);<]*/
+		/*[>service &= chr(9) & chr(9) & "return get" & capitalizeString(dao) & "().getAll();" & chr(10);<]*/
+		/*[>service &= chr(9) & "}" & chr(10) & chr(10);<]*/
+
+		/*service &= chr(9) & '<cffunction name="getBeanById">' & chr(10);*/
+		   /*service &= chr(9) & chr(9) & '<cfargument name="id" type="numeric" required="true">' & chr(10);*/
+		/*service &= chr(9) & chr(9) & "<cfreturn get" & capitalizeString(dao) & "().getBeanById( id );" & chr(10);*/
+		/*service &= chr(9) & '</cffunction>' & chr(10) & chr(10);*/
+
+		/*/*service &= chr(9) & "function getBeanById( required any id ) {" & chr(10);*/
+		/*service &= chr(9) & chr(9) & "return get" & capitalizeString(dao) & "().getBeanById( id );" & chr(10);*/
+		/*service &= chr(9) & "}" & chr(10) & chr(10);<]*/
+
+		/*service &= chr(9) & '<cffunction name="getQueryBy">' & chr(10);*/
+		/*service &= chr(9) & chr(9) & '<cfargument name="col" type="string" required="true">' & chr(10);*/
+		/*service &= chr(9) & chr(9) & '<cfreturn get' & capitalizeString(dao) & '().getQueryBy( argumentCollection=arguments.col )>' & chr(10);*/
+		/*service &= chr(9) & "</cffunction>" & chr(10) & chr(10);*/
+
+		/*/*service &= chr(9) & "function getQueryBy( required struct rc ) {" & chr(10);*/
+		/*service &= chr(9) & chr(9) & "return get" & capitalizeString(dao) & "().getQueryBy( argumentCollection=arguments.rc );" & chr(10);*/
+		/*service &= chr(9) & "}" & chr(10) & chr(10);<]*/
+
+		/*service &= chr(9) & '<cffunction name="create">' & chr(10);*/
+		/*service &= chr(9) & chr(9) & '<cfargument name="rc" required="true" type="struct">' & chr(10) & chr(10);*/
+		/*service &= chr(9) & chr(9) & '<cfset var bean = new model.beans.' & variables.table & '()>' & chr(10) & chr(10);*/
+
+		/*for(i=1;i<=variables.tableColumns.recordCount;i++) {*/
+			/*if(variables.tableColumns.is_primarykey[i] neq "yes"){*/
+				/*service &= chr(9) & chr(9) & "<cfset bean.set" & capitalizeString(variables.tableColumns.column_name[i]) & "( rc." & variables.tableColumns.column_name[i] & " )>" & chr(10);*/
+			/*}*/
+		/*}*/
+
+		/*service &= chr(10);*/
+		/*service &= chr(9) & chr(9) & "<cfreturn get" & capitalizeString(dao) & "().create( bean )>" & chr(10);*/
+		/*service &= chr(9) & "</cffunction>" & chr(10) & chr(10);*/
+/*/**/
+		/*service &= chr(9) & "function create( required struct rc ) {" & chr(10);*/
+		/*service &= chr(9) & chr(9) & "var bean = variables.beanFactory.getBean( '" & variables.table &"' );" & chr(10) & chr(10);*/
+
+		/*for(i=1;i<=variables.tableColumns.recordCount;i++) {*/
+			/*if(variables.tableColumns.is_primarykey[i] neq "yes"){*/
+				/*service &= chr(9) & chr(9) & "bean.set" & capitalizeString(variables.tableColumns.column_name[i]) & "( rc." & variables.tableColumns.column_name[i] & " );" & chr(10);*/
+			/*}*/
+		/*}*/
+
+		/*service &= chr(10);*/
+		/*service &= chr(9) & chr(9) & "return get" & capitalizeString(dao) & "().create( bean );" & chr(10);*/
 		/*service &= chr(9) & "}" & chr(10) & chr(10);*/
-
-		service &= chr(9) & '<cffunction name="getBeanById">' & chr(10);
-	   	service &= chr(9) & chr(9) & '<cfargument name="id" type="numeric" required="true">' & chr(10);
-		service &= chr(9) & chr(9) & "<cfreturn get" & capitalizeString(dao) & "().getBeanById( id );" & chr(10);
-		service &= chr(9) & '</cffunction>' & chr(10) & chr(10);
-
-		/*service &= chr(9) & "function getBeanById( required any id ) {" & chr(10);
-		service &= chr(9) & chr(9) & "return get" & capitalizeString(dao) & "().getBeanById( id );" & chr(10);
-		service &= chr(9) & "}" & chr(10) & chr(10);*/
-
-		service &= chr(9) & '<cffunction name="getQueryBy">' & chr(10);
-		service &= chr(9) & chr(9) & '<cfargument name="col" type="string" required="true">' & chr(10);
-		service &= chr(9) & chr(9) & '<cfreturn get' & capitalizeString(dao) & '().getQueryBy( argumentCollection=arguments.col )>' & chr(10);
-		service &= chr(9) & "</cffunction>" & chr(10) & chr(10);
-
-		/*service &= chr(9) & "function getQueryBy( required struct rc ) {" & chr(10);
-		service &= chr(9) & chr(9) & "return get" & capitalizeString(dao) & "().getQueryBy( argumentCollection=arguments.rc );" & chr(10);
-		service &= chr(9) & "}" & chr(10) & chr(10);*/
-
-		service &= chr(9) & '<cffunction name="create">' & chr(10);
-		service &= chr(9) & chr(9) & '<cfargument name="rc" required="true" type="struct">' & chr(10) & chr(10);
-		service &= chr(9) & chr(9) & '<cfset var bean = new model.beans.' & variables.table & '()>' & chr(10) & chr(10);
-
-		for(i=1;i<=variables.tableColumns.recordCount;i++) {
-			if(variables.tableColumns.is_primarykey[i] neq "yes"){
-				service &= chr(9) & chr(9) & "<cfset bean.set" & capitalizeString(variables.tableColumns.column_name[i]) & "( rc." & variables.tableColumns.column_name[i] & " )>" & chr(10);
-			}
-		}
-
-		service &= chr(10);
-		service &= chr(9) & chr(9) & "<cfreturn get" & capitalizeString(dao) & "().create( bean )>" & chr(10);
-		service &= chr(9) & "</cffunction>" & chr(10) & chr(10);
-/*
-		service &= chr(9) & "function create( required struct rc ) {" & chr(10);
-		service &= chr(9) & chr(9) & "var bean = variables.beanFactory.getBean( '" & variables.table &"' );" & chr(10) & chr(10);
-
-		for(i=1;i<=variables.tableColumns.recordCount;i++) {
-			if(variables.tableColumns.is_primarykey[i] neq "yes"){
-				service &= chr(9) & chr(9) & "bean.set" & capitalizeString(variables.tableColumns.column_name[i]) & "( rc." & variables.tableColumns.column_name[i] & " );" & chr(10);
-			}
-		}
-
-		service &= chr(10);
-		service &= chr(9) & chr(9) & "return get" & capitalizeString(dao) & "().create( bean );" & chr(10);
-		service &= chr(9) & "}" & chr(10) & chr(10);
-*/
+/*<]*/
 
 
 
-		/*service &= chr(9) & "function update( required struct rc ) {" & chr(10);
-		service &= chr(9) & chr(9) & "var bean = variables.beanFactory.getBean('" & variables.table &"' );" & chr(10);
+		/*/*service &= chr(9) & "function update( required struct rc ) {" & chr(10);*/
+		/*service &= chr(9) & chr(9) & "var bean = variables.beanFactory.getBean('" & variables.table &"' );" & chr(10);*/
 
-		for(i=1;i<=variables.tableColumns.recordCount;i++) {
-			service &= chr(9) & chr(9) & "bean.set" & capitalizeString(variables.tableColumns.column_name[i]) & "( rc." & variables.tableColumns.column_name[i] & " );" & chr(10);
-		}
+		/*for(i=1;i<=variables.tableColumns.recordCount;i++) {*/
+			/*service &= chr(9) & chr(9) & "bean.set" & capitalizeString(variables.tableColumns.column_name[i]) & "( rc." & variables.tableColumns.column_name[i] & " );" & chr(10);*/
+		/*}*/
 
-		service &= chr(10);
-		service &= chr(9) & chr(9) & "return get" & capitalizeString(dao) & "().update( bean );" & chr(10);
-		service &= chr(9) & "}" & chr(10) & chr(10);*/
+		/*service &= chr(10);*/
+		/*service &= chr(9) & chr(9) & "return get" & capitalizeString(dao) & "().update( bean );" & chr(10);*/
+		/*service &= chr(9) & "}" & chr(10) & chr(10);<]*/
 
-		service &= chr(9) & '<cffunction name="dodelete">' & chr(10);
-		service &= chr(9) & chr(9) & '<cfargument name="bean" required="true" type="model.beans.' & dao & '">' & chr(10);
-		service &= chr(9) & chr(9) & "<cfreturn get" & dao & "().delete( bean )>" & chr(10);
-		service &= chr(9) & "</cffunction>" & chr(10);
+		/*service &= chr(9) & '<cffunction name="dodelete">' & chr(10);*/
+		/*service &= chr(9) & chr(9) & '<cfargument name="bean" required="true" type="model.beans.' & dao & '">' & chr(10);*/
+		/*service &= chr(9) & chr(9) & "<cfreturn get" & dao & "().delete( bean )>" & chr(10);*/
+		/*service &= chr(9) & "</cffunction>" & chr(10);*/
 
-		/*service &= chr(9) & "function delete( required any bean ) {" & chr(10);
-		service &= chr(9) & chr(9) & "return get" & dao & "().delete( bean );" & chr(10);
-		service &= chr(9) & "}" & chr(10);*/
+		/*/*service &= chr(9) & "function delete( required any bean ) {" & chr(10);*/
+		/*service &= chr(9) & chr(9) & "return get" & dao & "().delete( bean );" & chr(10);*/
+		/*service &= chr(9) & "}" & chr(10);<]*/
 
-		service &= '</cffunction';
+		/*service &= '</cffunction>';*/
 
 		return service;
+
 	}
-
-
 
 
 
@@ -452,473 +536,219 @@ component {
 		return service;
 	}
 
+////////////////////////////////////////////////////////////////////////////////....................
+// Gateway Tag Generator
+////////////////////////////////////////////////////////////////////////////////....................
+	public string function generateTagGateway() {
+
+		dao = variables.table & "Gateway";
+
+		var gateway = '<cfcomponent accessors="true" displayName="#capitalizeString(variables.table)#Gateway" output="false" extends="model.services.CoreUtils"' & chr(10);
+	    gateway &= '	hint="I am the #capitalizeString(variables.table)# Gateway Class.">' & chr(10) & chr(10);
+
+		gateway &= '	<cffunction name="init" access="public" output="false" returnType="any"' & chr(10);
+		gateway &= '		hint="I am the constuctor method for the #capitalizeString(variables.table)# Gateway Class.">' & chr(10) & chr(10);
+
+		gateway &= '		<cfreturn this>' & chr(10);
+		gateway &= '	</cffunction>' & chr(10) & chr(10);
+
+
+		gateway &= '	<!--- Public Methods --->' & chr(10);
+		gateway &= '	<cffunction name="getAll#capitalizeString(variables.table)#" access="public" output="false" returnType="query"' & chr(10);
+		gateway &= '		hint="I run a query of all #variables.table# within the database table.">' & chr(10) & chr(10);
+
+		gateway &= '		<cfset var qAll#variables.table# = "">' & chr(10);
+		gateway &= '		<cfquery name="qAll#capitalizeString(variables.table)#">' & chr(10);
+		gateway &= '			SELECT' & chr(10);
+
+		for(i=1;i<=variables.tableColumns.recordCount;i++) {
+			gateway &= '				,#variables.tableColumns.column_name[i]#' & chr(10);
+		}
+		gateway &= '			FROM #variables.table#' & chr(10);
+		gateway &= '		</cfquery>' & chr(10);
+
+		gateway &= '		<cfreturn queryToArray(qAll#capitalizeString(variables.table)#)>' & chr(10);
+		gateway &= '	</cffunction>' & chr(10) & chr(10);
+
+
+		for(i=1;i<=variables.tableColumns.recordCount;i++) {
+			gateway &= '	<cffunction name="filterBy#capitalizeString(variables.tableColumns.column_name[i])#" access="public" output="false"' & chr(10);
+			gateway &= '		hint="I query the database to find a #capitalizeString(variables.table)# with a matching #capitalizeString(variables.tableColumns.column_name[i])#.">' & chr(10) & chr(10);
+			gateway &= '		<cfargument name="#LCase(variables.tableColumns.column_name[i])#" required="true" type="string"' & chr(10);
+			gateway &= '			hint="I am the #LCase(variables.tableColumns.column_name[i])# to search for.">' & chr(10) & chr(10);
+			gateway &= '			<!--- Create and populate a structure object containing the filter to pass through. --->' & chr(10);
+			gateway &= '			<cfset var stuFilter = {' & chr(10);
+				gateway &= '				#LCase(variables.tableColumns.column_name[i])# = arguments.#LCase(variables.tableColumns.column_name[i])#' & chr(10);
+				gateway &= '			}>' & chr(10) & chr(10);
+			gateway &= '		<!--- Send the structure into the query method and return the query object. --->' & chr(10);
+			gateway &= '		<cfreturn filterAll#capitalizeString(variables.table)#(stuFilter)>' & chr(10);
+			gateway &= '	</cffunction>' & chr(10) & chr(10);
+		}
+
+
+		gateway &= '	<cffunction name="filterAll#capitalizeString(variables.table)#" access="private" output="false"' & chr(10);
+         gateway &= '		hint="I run a query and will return all user records.  If a filter' & chr(10);
+         gateway &= '		has been supplied, I will refine the search using the filter' & chr(10);
+         gateway &= '		information sent to me.">' & chr(10) & chr(10);
+
+         gateway &= '		<cfargument name="filter" required="false" type="struct"' & chr(10);
+         gateway &= '			default="##structNew()##" hint="I am the structure used to filter the query.">' & chr(10) & chr(10);
+
+         gateway &= '		<cfset var qSearch = new Query()>' & chr(10) & chr(10);
+         gateway &= '		<cfquery name="qSearch">' & chr(10);
+		 gateway &= '			SELECT' & chr(10);
+		 for(i=1;i<=variables.tableColumns.recordCount;i++) {
+			 gateway &= '				,#variables.tableColumns.column_name[i]#' & chr(10);
+		 }
+
+		 gateway &= '			WHERE 1 = 1' & chr(10) & chr(10);
+
+		 gateway &= '			<cfif NOT structIsEmpty(arguments.filter)>' & chr(10);
+		 gateway &= "				<!--- A filter has been provided.  Let's find out which filter" & chr(10);
+		 gateway &= '				it is, and apply the necessary clause to the SQL. --->' & chr(10);
+
+		 for(i=1;i<=variables.tableColumns.recordCount;i++) {
+			 var queryParamType = queryParamColumnType(variables.tableColumns.type_name[i]);
+
+			 gateway &= '				<!--- Perform a LIKE comparison on the #capitalizeString(variables.tableColumns.column_name[i])# --->' & chr(10);
+			 gateway &= "				<cfif structKeyExists(arguments.filter, '#capitalizeString(variables.tableColumns.column_name[i])#')>" & chr(10);
+			 gateway &= '				AND #variables.tableColumns.column_name[i]# LIKE' & chr(10);
+
+			 gateway &= '				<cfqueryparam cfsqltype="cf_sql_#queryParmType#" value="##arguments.filter.#LCase(variables.tableColumns.column_name[i])###" />' & chr(10);
+
+			 gateway &= '			</cfif>' & chr(10) & chr(10);
+
+			 gateway &= '			</cfif>' & chr(10);
+		 }
+		 gateway &= '		</cfquery>' & chr(10);
+
+		 gateway &= '		<cfreturn queryToArray(qSearch)>' & chr(10);
+
+		 gateway &= '	</cffunction>' & chr(10);
+
+		 gateway &= '</cfcomponent>' & chr(10);
+
+		 return gateway;
+
+	}
+
+
+
 ///////////////////////////////////////////////////////////////////////////////
 // DAO Tag Generator
 ///////////////////////////////////////////////////////////////////////////////
 	public string function generateTagDAO() {
-		var dao = '<cfcomponent accessors="true" output="false">' & chr(10) & chr(10);
+		var dao = '<cfcomponent accessors="true" output="false" extends="model.services.CoreUtils"' & chr(10);
+		dao &= '	hint="I am the #capitalizeString(variables.table)#Dao Class.">' & chr(10) & chr(10);
 
-		// Get All
-		dao &= chr(9) & '<cffunction name="getAll" output="false" returnType="query">' & chr(10);
-		dao &= chr(9) & chr(9) & "<cfset var qRead = new Query()>" & chr(10);
-		dao &= chr(9) & chr(9) & "<cfset var result = {}>" & chr(10);
-		var sortOrder = '';
-		for(i=1;i<=variables.tableColumns.recordCount;i++) {
-			if(Find('Name',variables.tableColumns.column_name[i]) neq 0) {
-				if(sortOrder neq '') {
-					sortOrder &= ', ';
-				}
-				sortOrder &= variables.tableColumns.column_name[i];
-			}
-		}
-		dao &= chr(9) & chr(9) & "<cfquery name='qRead' result='result'>" & chr(10);
-		dao &= chr(9) & chr(9) & chr(9) & "Select * from " & variables.table;
-		if(sortOrder neq '') {
-			dao &= " order by " & sortOrder;
-		}
-		dao &= chr(10);
-		dao &= chr(9) & chr(9) & "</cfquery>" & chr(10);
-		dao &= chr(9) & chr(9) & "<cfreturn qRead>" & chr(10);
-		dao &= chr(9) & "</cffunction>" & chr(10) & chr(10);
+		dao &= '	<cfset init()>' & chr(10) & chr(10);
+
+		dao &= '	<cffunction name="init" access="public" output="false" returnType="struct"' & chr(10);
+		dao &= '		hint="I am the constructor method of the #capitalizeString(variables.table)#Dao Class.">' & chr(10);
+
+		dao &= '		<cfreturn this>' & chr(10);
+		dao &= '	</cffunction>' & chr(10) & chr(10);
 
 		//Get Bean by Id
-		dao &= chr(9) & '<cffunction name="getBeanById" output="false" returnType="model.beans.#variables.table#">' & chr(10);
-		dao &= chr(9) & chr(9) & '<cfargument name="id" required="true" type="numeric">' & chr(10);
+		dao &= '		<cffunction name="get#capitalizeString(variables.table)#ById" access="public" output="false" returnType="model.beans.#capitalizeString(variables.table)#"' & chr(10);
+		dao &= '			hint="I return the #capitalizeString(variables.table)# bean populated with details of a specific #capitalizeString(variables.table)#."' & chr(10) ;
 
-		dao &= chr(9) & chr(9) & "<cfset var qRead = new query()>" & chr(10);
-		dao &= chr(9) & chr(9) & "<cfset var result = {}>" & chr(10);
-		dao &= chr(9) & chr(9) & '<cfquery name="qRead" result="result">' & chr(10);
-		dao &= chr(9) & chr(9) & chr(9) & "SELECT *" & chr(10);
-	   	dao &= chr(9) & chr(9) & chr(9) & "FROM #variables.table#" & chr(10);
-	   	dao &= chr(9) & chr(9) & chr(9) & 'WHERE #variables.pkField# = <cfqueryparam value="###variables.pkField###" cfsqltype="CF_SQL_FLOAT">' & chr(10);
-		dao &= chr(9) & chr(9) & "</cfquery>" & chr(10) & chr(10);
+		dao &= '			<cfargument name="#capitalizeString(variables.table)#ID" required="true" type="numeric">' & chr(10) & chr(10);
 
-		dao &= chr(9) & chr(9) & "<cfset var #variables.table#Bean = new model.beans.#variables.table#()>" & chr(10);
-
+		dao &= "			<cfset var qSearch = new query()>" & chr(10);
+		dao &= "			<cfset var obj#capitalizeString(variables.table)# = {}>" & chr(10);
+		dao &= '			<cfquery name="qSearch">' & chr(10);
+		dao &= "				SELECT" & chr(10);
 		for (i = 1; i <= variables.tableColumns.recordCount; i += 1) {
-			dao &= chr(9) & chr(9) & "<cfset #variables.table#Bean.set" & capitalizeString(variables.tableColumns.column_name[i]) & "( qRead." & variables.tableColumns.column_name[i] & " )>" & chr(10);
+			da0 &= "					, #variables.tableColumns.column_name[i]#" & chr(10);
 		}
+	   	dao &= "				FROM #variables.table#" & chr(10);
+	   	dao &= '				WHERE #variables.pkField# = <cfqueryparam value="###variables.pkField###" cfsqltype="CF_SQL_FLOAT">' & chr(10);
+		dao &= "			</cfquery>" & chr(10) & chr(10);
 
-		dao &= chr(9) & chr(9) & "<cfreturn #variables.table#Bean>" & chr(10);
-		dao &= chr(9) & "</cffunction>" & chr(10) & chr(10);
-
-		// Get Query By
-		dao &= chr(9) & '<cffunction name="getQueryBy" output="false" returnType="query">' & chr(10);
-		dao &= chr(9) & chr(9) & "<cfset var qRead = new query()>" & chr(10);
-
-		dao &= chr(9) & chr(9) & '<cfquery name="qRead">' & chr(10);
-		dao &= chr(9) & chr(9) & chr(9) & 'select * from #variables.table# where 1=1 and ' & chr(10) & chr(10);
-
-		for(i=1;i<=variables.tableColumns.recordCount;i++) {
-			dao &= chr(9) & chr(9) & "<cfif (structKeyExists(arguments, '" & variables.tableColumns.column_name[i] & "'))>" & chr(10);
-
-			dao &= chr(9) & chr(9) & chr(9) & '#variables.tableColumns.column_name[i]# = <cfqueryparam value="##arguments.' & variables.tableColumns.column_name[i] & '##" CFSQLTYPE="CF_SQL_';
-
-			switch(variables.tableColumns.type_name[i]) {
-				case "bit":
-					dao &= 'BIT">' & chr(10);
-					break;
-				case "char": case "nchar": case "uniqueidentifier": case "guid":
-					dao &= 'CHAR">' & chr(10);
-					break;
-				case "decimal": case "money": case "smallmoney":
-					dao &= 'DECIMAL">' & chr(10);
-					break;
-				case "float":
-					dao &= 'FLOAT">' & chr(10);
-					break;
-				case "int": case "integer": case "int identity":
-					dao &= 'INTEGER">' & chr(10);
-					break;
-				case "text": case "ntext":
-					dao &= 'LONGVARCHAR">' & chr(10);
-					break;
-				case "numeric":
-					dao &= 'NUMERIC">' & chr(10);
-					break;
-				case "real":
-					dao &= 'REAL">' & chr(10);
-					break;
-				case "smallint":
-					dao &= 'SMALLINT">' & chr(10);
-					break;
-				case "date":
-					dao &= 'DATE">' & chr(10);
-					break;
-				case "time":
-					dao &= 'TIME">' & chr(10);
-					break;
-				case "datetime": case "smalldatetime":
-					dao &= 'TIMESTAMP">' & chr(10);
-					break;
-				case "tinyint":
-					dao &= 'TINYINT">' & chr(10);
-					break;
-				case "varchar": case "nvarchar":
-					dao &= 'VARCHAR">' & chr(10);
-					break;
-				default:
-					dao &= 'VARCHAR">' & chr(10);
-					break;
-			}
-		dao &= chr(9) & chr(9) & "</cfif>" & chr(10) & chr(10);
+		dao &= "			<cfif qSearch.recordCount>" & chr(10);
+		dao &= "				<!--- If a record has been returned for the #capitalizeString(variables.table)#ID, create an instance of the #capitalizeString(variables.table)# bean and return it. --->" & chr(10);
+		dao &= "				<cfset obj#capitalizeString(variables.table)# = new model.beans.#variables.table#().init(" & chr(10);
+		for (i = 1; i <= variables.tableColumns.recordCount; i += 1) {
+			dao &= "			#variables.tableColumns.column_name[i]# = qSearch.#variables.tableColumns.column_name[i]#," & chr(10);
 		}
-		dao &= chr(9) & chr(9) & "</cfquery>" & chr(10) & chr(10);
-		dao &= chr(9) & chr(9) & "<cfreturn qRead>" & chr(10);
-		dao &= chr(9) & "</cffunction>" & chr(10) & chr(10);
+		dao &= "			</cfif>" & chr(10);
+		dao &= "		<cfreturn obj#variables.table#>" & chr(10);
+		dao &= "	</cffunction>" & chr(10) & chr(10);
 
-// Create
-		dao &= chr(9) & '<cffunction name="create" output="false" returnType="struct">' & chr(10);
-		dao &= chr(9) & chr(9) & '<cfargument name="#variables.table#Bean" required="true" type="model.beans.#variables.table#">' & chr(10) & chr(10);
 
-		dao &= chr(9) & chr(9) & "<cfset var qInsert = new Query()>" & chr(10);
-		dao &= chr(9) & chr(9) & "<cfset var result = {}>" & chr(10);
-		dao &= chr(9) & chr(9) & "<cfset var msg = {}>" & chr(10) & chr(10);
-		dao &= chr(9) & chr(9) & "<cftry>" & chr(10);
-		dao &= chr(9) & chr(9) & chr(9) & '<cfquery name="qInsert" result="result">' & chr(10);
-		dao &= chr(9) & chr(9) & chr(9) & chr(9) & 'INSERT INTO #variables.table# (' & chr(10);
-		dao &= chr(9) & chr(9) & chr(9) & chr(9);
 
-		aList = "";
-		for(i=1;i<=variables.tableColumns.recordCount;i++) {
-			if(variables.tableColumns.is_primarykey[i] neq "yes"){
-				aList &= variables.tableColumns.column_name[i] & ",";
-			}
+dao &= '	<cffunction name="delete#capitalizeString(variables.table)#ById" access="public" output="false" returnType="boolean" hint="I delete a #capitalizeString(variables.table)# from the database.">' & chr(10);
+dao &= '		<cfargument name="staffId" required="true" type="numeric" hint="I am the ID of the #capitalizeString(variables.table)# you wish to delete.">' & chr(10);
+dao &= '		<cfset var qDelete = new Query()>' & chr(10);
+dao &= '		<cfset var boolSuccess = true>' & chr(10) & chr(10);
+
+dao &= '		<cftry>' & chr(10);
+dao &= '			<cfquery name="qDelete">' & chr(10);
+dao &= '				Delete from #capitalizeString(variables.table)#' & chr(10);
+dao &= '				where ID = <cfqueryparam value="#arguments.bean.getID()#" cfsqltype="CF_SQL_FLOAT">' & chr(10);
+dao &= '			</cfquery>' & chr(10);
+dao &= '			<cfcatch type="database">' & chr(10);
+dao &= '				<cfset boolSuccess = false>' & chr(10);
+dao &= '			</cfcatch>' & chr(10);
+dao &= '		</cftry>' & chr(10);
+dao &= '	    <cfreturn boolSuccess>' & chr(10);
+dao &= '	</cffunction>' & chr(10) & chr(10);
+
+
+dao &= '	<!--- SAVE --->' & chr(10);
+dao &= '	<cffunction name="save#capitalizeString(variables.table)#" access="public" output="false" returnType="string"' & chr(10);
+dao &= '		hint="I handle saving a #capitalizeString(variables.table)#, either by creating a new entry or updating an existing one.">' & chr(10);
+dao &= '	    <cfargument name="#capitalizeString(variables.table)#" required="true" type="model.beans.#capitalizeString(variables.table)#" hint="I am the #capitalizeString(variables.table)# bean.">' & chr(10) & chr(10);
+
+dao &= '	    <cfset var success = "">' & chr(10);
+dao &= '	    <cfif exists(arguments.#LCase(variables.table)#)>' & chr(10);
+dao &= '	        <cfset success = update#capitalizeString(variables.table)#(arguments.#LCase(variables.table)#)>' & chr(10);
+dao &= '	    <cfelse>' & chr(10);
+dao &= '	        <cfset success = createNew#capitalizeString(variables.table)#(arguments.#LCase(variables.table)#)>' & chr(10);
+dao &= '		</cfif>' & chr(10);
+dao &= '	    <cfreturn success>' & chr(10);
+dao &= '	</cffunction>' & chr(10);
+
+
+
+		dao &= '<!--- Private Methods --->';
+dao &= '	<cffunction name="createNew#capitalizeString(variables.table)#" access="private" output="false" returnType="numeric"' & chr(10);
+dao &= '		hint="I insert a new rocord into the database.">' & chr(10);
+dao &= '		<cfargument name="#LCase(variables.table)#" required="true" type="model.beans.#capitalizeString(variables.table)#" hint="I am the #capitalizeString(variables.table)# bean.">' & chr(10) & chr(10);
+
+dao &= '	<cfset var qInsert = new Query()>' & chr(10);
+dao &= '	<cfset var insertResult = 0>' & chr(10) & chr(10);
+dao &= '	<cfquery name="qInsert" result="insertResult">' & chr(10);
+dao &= '		INSERT' & chr(10);
+dao &= '        INTO #variables.table#' & chr(10);
+dao &= '        (' & chr(10);
+		for (i = 1; i <= variables.tableColumns.recordCount; i += 1) {
+			dao &= '            , #variables.tableColumn.column_name[i]#' & chr(10);
 		}
-		aList = mid(aList, 1, len(aList)-1);
-		dao &= aList;
-		dao &= chr(10) & chr(9) & chr(9) & chr(9) & chr(9) & ") VALUES (" & chr(10);
-
-		/*dao &= chr(9) & chr(9) & chr(9) & chr(9) & "& '";
-		bList = "";
-		for(i=1;i<=variables.tableColumns.recordCount;i++) {
-			if(variables.tableColumns.column_name[i] neq variables.pkField){
-				bList &= ":" & variables.tableColumns.column_name[i] & ",";
-			}
+dao &= '        ) VALUES (' & chr(10);
+		for (i = 1; i <= variables.tableColumns.recordCount; i += 1) {
+		var queryParamType = queryParamColumnType(variables.tableColumns.type_name[i]);
+dao &= '        <cfqueryparam cfsqltype="cf_sql_#queryParamType#" value="##arguments.#LCase(variables.table)#.get#variables.tableColumn.column_name[i]#()##" />,' & chr(10);
 		}
-		bList = mid(bList, 1, len(bList)-1);
-		dao &= bList;
-		dao &= ")';" & chr(10);*/
-
-				writeDump(variables.tableColumns);
-		for(i=1;i<=variables.tableColumns.recordCount;i++) {
-			if(variables.tableColumns.is_primarykey[i] neq "yes"){
-
-				if ((variables.tableColumns.type_name[i] == "number" AND
-						   	variables.tableColumns.is_nullable[i]) OR
-						(variables.tableColumns.type_name[i] == "float" AND
-						   	variables.tableColumns.is_nullable[i]) OR
-					   	variables.tableColumns.type_name[i] == "date") {
-					dao &= chr(9) & chr(9) & chr(9) & '<cfif NOT len(arguments.#variables.table#Bean.get' & capitalizeString(variables.tableColumns.column_name[i]) & '())>' & chr(10);
-					dao &= chr(9) & chr(9) & chr(9) & chr(9) & '<cfqueryparam null="true">,' & chr(10);
-					dao &= chr(9) & chr(9) & chr(9) & '<cfelse>' & chr(10);
-					dao &= chr(9) & chr(9) & chr(9) & chr(9) & '<cfqueryparam value="';
-				} else {
-					dao &= chr(9) & chr(9) & chr(9) & '<cfqueryparam value="';
-				}
-					if (variables.tableColumns.type_name[i] == "number" OR
-							variables.tableColumns.type_name[i] == "float") {
-					   if (variables.tableColumns.decimal_digits[i]) {
-							dao &= '##val(arguments.#variables.table#Bean.get' & capitalizeString(variables.tableColumns.column_name[i]) & '())##"';
-						} else {
-							dao &= '##int(arguments.#variables.table#Bean.get' & capitalizeString(variables.tableColumns.column_name[i]) & '())##"';
-						}
-					} else {
-						dao &= '##arguments.#variables.table#Bean.get' & capitalizeString(variables.tableColumns.column_name[i]) & '()##"';
-					}
-				dao &= ' cfsqltype="CF_SQL_';
-				switch(variables.tableColumns.type_name[i]) {
-					case "bit":
-						dao &= 'BIT" ';
-						break;
-					case "char": case "nchar": case "uniqueidentifier": case "guid":
-						dao &= 'CHAR" ';
-						break;
-					case "decimal": case "money": case "smallmoney":
-						dao &= 'DECIMAL" ';
-						break;
-					case "float":
-						dao &= 'FLOAT" ';
-						break;
-					case "int": case "integer": case "int identity":
-						dao &= 'INTEGER" ';
-						break;
-					case "text": case "ntext":
-						dao &= 'LONGVARCHAR" ';
-						break;
-					case "number":
-						if (variables.tableColumns.decimal_digits[i]) {
-							dao &= 'DECIMAL" ';
-						} else {
-							dao &= 'FLOAT" ';
-						}
-						break;
-					case "real":
-						dao &= 'REAL" ';
-						break;
-					case "smallint":
-						dao &= 'SMALLINT" ';
-						break;
-					case "date":
-						dao &= 'TIMESTAMP" ';
-						break;
-					case "time":
-						dao &= 'TIME" ';
-						break;
-					case "datetime": case "smalldatetime":
-						dao &= 'TIMESTAMP" ';
-						break;
-					case "tinyint":
-						dao &= 'TINYINT" ';
-						break;
-					case "varchar": case "nvarchar":
-						dao &= 'VARCHAR" ';
-						break;
-					default:
-						dao &= 'VARCHAR" ';
-						break;
-				}
-
-				dao &= 'maxlength="' & variables.tableColumns.column_size[i] & '">';
-
-				if (i EQ variables.tableColumns.recordCount) {
-					dao &= chr(10);
-				} else {
-					dao &= ',' & chr(10);
-				}
-				if ((variables.tableColumns.type_name[i] == "number" AND
-						   	variables.tableColumns.is_nullable[i]) OR
-						(variables.tableColumns.type_name[i] == "float" AND
-						   	variables.tableColumns.is_nullable[i]) OR
-					   	variables.tableColumns.type_name[i] == "date") {
-					dao &= chr(9) & chr(9) & chr(9) & '</cfif>' & chr(10);
-				}
-			}
-		}
-		dao &= chr(9) & chr(9) & chr(9) & chr(9) & ')' & chr(10);
-		dao &= chr(9) & chr(9) & chr(9) & '</cfquery>' & chr(10) & chr(10);
-
-		dao &= chr(9) & chr(9) & chr(9) & '<cfset msg.id = result.rowid>' & chr(10);
-		dao &= chr(9) & chr(9) & chr(9) & '<cfset msg.text = "Record inserted successfully.">' & chr(10);
-		dao &= chr(9) & chr(9) & chr(9) & '<cfset msg.type = "success">' & chr(10);
-
-		dao &= chr(9) & chr(9) & '<cfcatch type="any" name="e">' & chr(10);
-		dao &= chr(9) & chr(9) & chr(9) & '<cfset msg.text = "An error has occurred. The record was not inserted">' & chr(10);
-		dao &= chr(9) & chr(9) & chr(9) & '<cfset msg.type = "error">' & chr(10);
-		dao &= chr(9) & chr(9) & chr(9) & '<cfset msg.result = e>' & chr(10);
-		dao &= chr(9) & chr(9) & '</cfcatch>' & chr(10) & chr(10);
-		dao &= chr(9) & chr(9) & '</cftry>' & chr(10) & chr(10);
-
-		dao &= chr(9) & chr(9) & "<cfreturn msg>" & chr(10);
-		dao &= chr(9) & "</cffunction>" & chr(10) & chr(10);
-
-		// Update
-		dao &= chr(9) & '<cffunction name="update" output="false" returnType="struct">' & chr(10);
-		dao &= chr(9) & chr(9) & '<cfargument name="#variables.table#Bean" required="true" type="model.beans.#variables.table#">' & chr(10) & chr(10);
-		dao &= chr(9) & chr(9) & "<cfset var qUpdate = new Query()>" & chr(10);
-		dao &= chr(9) & chr(9) & "<cfset var result = {}>" & chr(10);
-		dao &= chr(9) & chr(9) & "<cfset var msg = {}>" & chr(10) & chr(10);
-
-		dao &= chr(9) & chr(9) & '<cftry>' & chr(10) & chr(10);
-		dao &= chr(9) & chr(9) & chr(9) & '<cfquery>' & chr(10) & chr(10);
-		dao &= chr(9) & chr(9) & chr(9) & 'UPDATE #variables.table#' & chr(10);
-	   	dao &= chr(9) & chr(9) & chr(9) & 'SET' & chr(10);
-
-		for(i=1;i<=variables.tableColumns.recordCount;i++) {
-			if(variables.tableColumns.is_primarykey[i] eq false) {
-				if ((variables.tableColumns.type_name[i] == "number" AND
-						   	variables.tableColumns.is_nullable[i]) OR
-						(variables.tableColumns.type_name[i] == "float" AND
-						   	variables.tableColumns.is_nullable[i]) OR
-					   	variables.tableColumns.type_name[i] == "date") {
-					dao &= chr(9) & chr(9) & chr(9) & '<cfif NOT len(arguments.#variables.table#Bean.get' & capitalizeString(variables.tableColumns.column_name[i]) & '())>' & chr(10);
-					dao &= chr(9) & chr(9) & chr(9) & chr(9) & variables.tableColumns.column_name[i] & ' = <cfqueryparam null="true">,' & chr(10);
-					dao &= chr(9) & chr(9) & chr(9) & '<cfelse>' & chr(10);
-				}
-				dao &= chr(9) & chr(9) & chr(9) & chr(9) & variables.tableColumns.column_name[i] & ' = <cfqueryparam value="';
-				if (variables.tableColumns.type_name[i] == "number" OR
-						variables.tableColumns.type_name[i] == "float") {
-					if (variables.tableColumns.decimal_digits[i]) {
-						dao &= '##val(arguments.#variables.table#Bean.get' & capitalizeString(variables.tableColumns.column_name[i]) & '())##"';
-					} else {
-						dao &= '##int(arguments.#variables.table#Bean.get' & capitalizeString(variables.tableColumns.column_name[i]) & '())##"';
-					}
-				} else {
-					dao &= '##arguments.#variables.table#Bean.get' & capitalizeString(variables.tableColumns.column_name[i]) & '()##"';
-				}
-				dao &= ' cfsqltype="CF_SQL_';
-			switch(variables.tableColumns.type_name[i]) {
-					case "bit":
-						dao &= 'BIT" ';
-						break;
-					case "char": case "nchar": case "uniqueidentifier": case "guid":
-						dao &= 'CHAR" ';
-						break;
-					case "decimal": case "money": case "smallmoney":
-						dao &= 'DECIMAL" ';
-						break;
-					case "float":
-						dao &= 'FLOAT" ';
-						break;
-					case "int": case "integer": case "int identity":
-						dao &= 'INTEGER" ';
-						break;
-					case "text": case "ntext":
-						dao &= 'LONGVARCHAR" ';
-						break;
-					case "number":
-						if (variables.tableColumns.decimal_digits[i]) {
-							dao &= 'DECIMAL" ';
-						} else {
-							dao &= 'FLOAT" ';
-						}
-						break;
-					case "real":
-						dao &= 'REAL" ';
-						break;
-					case "smallint":
-						dao &= 'SMALLINT" ';
-						break;
-					case "date":
-						dao &= 'TIMESTAMP" ';
-						break;
-					case "time":
-						dao &= 'TIME" ';
-						break;
-					case "datetime": case "smalldatetime":
-						dao &= 'TIMESTAMP" ';
-						break;
-					case "tinyint":
-						dao &= 'TINYINT" ';
-						break;
-					case "varchar": case "nvarchar":
-						dao &= 'VARCHAR" ';
-						break;
-					default:
-						dao &= 'VARCHAR" ';
-						break;
-				}
-				dao &= 'maxlength="' & variables.tableColumns.column_size[i] & '">';
-
-				if (i EQ variables.tableColumns.recordCount) {
-					dao &= chr(10);
-				} else {
-					dao &= ',' & chr(10);
-				}
-				if ((variables.tableColumns.type_name[i] == "number" AND
-						   	variables.tableColumns.is_nullable[i]) OR
-						(variables.tableColumns.type_name[i] == "float" AND
-						   	variables.tableColumns.is_nullable[i]) OR
-					   	variables.tableColumns.type_name[i] == "date") {
-					dao &= chr(9) & chr(9) & chr(9) & '</cfif>' & chr(10);
-				}
-
-			}
-		}
-		/*ulist = mid(ulist,1,len(ulist)-3);
-		dao &= ulist & "'" & chr(10);*/
-		dao &= chr(9) & chr(9) & chr(9) & chr(9) & ' where #variables.pkField# = <cfqueryparam value="##int(arguments.#variables.table#Bean.get#variables.pkField#())##" cfsqltype="CF_SQL_FLOAT">' & chr(10);
-
-		dao &= chr(9) & chr(9) & chr(9) & '</cfquery>' & chr(10) & chr(10);
-
-		dao &= chr(9) & chr(9) & chr(9) & '<cfset msg.id = ##arguments.#variables.table#Bean.get#variables.pkField#()##>' & chr(10);
-		dao &= chr(9) & chr(9) & chr(9) & '<cfset msg.text = "Record updated successfully.">' & chr(10);
-		dao &= chr(9) & chr(9) & chr(9) & '<cfset msg.type = "success">' & chr(10);
-		dao &= chr(9) & chr(9) & chr(9) & '<cfcatch type="any" name="e">' & chr(10);
-		dao &= chr(9) & chr(9) & chr(9) & chr(9) & '<cfset msg.text = "An error has occurred. The record was not updated.">' & chr(10);
-		dao &= chr(9) & chr(9) & chr(9) & chr(9) & '<cfset msg.type = "error">' & chr(10);
-		dao &= chr(9) & chr(9) & chr(9) & chr(9) & '<cfset msg.result = e>' & chr(10);
-		dao &= chr(9) & chr(9) & chr(9) & "</cfcatch>" & chr(10);
-		dao &= chr(9) & chr(9) & "</cftry>" & chr(10);
-		dao &= chr(9) & chr(9) & "<cfreturn msg>" & chr(10);
-		dao &= chr(9) & "</cffunction>" & chr(10) & chr(10);
+dao &= '        )' & chr(10);
+dao &= '    </cfquery>' & chr(10) & chr(10);
+dao &= '
+dao &= '    <cfdump var="#insertResult#">' & chr(10);
+dao &= '    <cfreturn insertResult.ROWID>' & chr(10);
+dao &= '</cffunction>' & chr(10);
 
 
-		// Delete
 
-		dao &= chr(9) & '<cffunction name="delete" output="false" returnType="struct" type="model.beans.#variables.table#">' & chr(10);
-		dao &= chr(9) & chr(9) & '<cfargument name="bean" required="true">' & chr(10);
-		dao &= chr(9) & chr(9) & "<cfset var msg = {}>" & chr(10);
-		dao &= chr(10);
-		dao &= chr(9) & chr(9) & "<cftry>" & chr(10);
 
-		dao &= chr(9) & chr(9) & chr(9) & "<cfset var qDelete = new query()>" & chr(10);
-		/*dao &= chr(9) & chr(9) & chr(9) & "qDelete.setDatasource(Application.Datasource);" & chr(10) & chr(10);*/
 
-		dao &= chr(9) & chr(9) & chr(9) & '<cfquery name="qDelete">' & chr(10);
-		dao &= chr(9) & chr(9) & chr(9) & chr(9) & 'Delete from #variables.table#' & chr(10);
-	   	dao &= chr(9) & chr(9) & chr(9) & chr(9) & 'where #variables.pkField# = <cfqueryparam value="##arguments.bean.get' & capitalizeString(variables.pkField) & '()##" cfsqltype="CF_SQL_';
 
-		for(i=1;i<=variables.tableColumns.recordCount;i++) {
-			if(variables.tableColumns.Is_PrimaryKey[i]){
-				switch(variables.tableColumns.type_name[i]) {
-					case "bit":
-						dao &= 'BIT">' & chr(10);
-						break;
-					case "char": case "nchar": case "uniqueidentifier": case "guid":
-						dao &= 'CHAR">' & chr(10);
-						break;
-					case "decimal": case "money": case "smallmoney":
-						dao &= 'DECIMAL">' & chr(10);
-						break;
-					case "float":
-						dao &= 'FLOAT">' & chr(10);
-						break;
-					case "int": case "integer": case "int identity":
-						dao &= 'INTEGER">' & chr(10);
-						break;
-					case "text": case "ntext":
-						dao &= 'LONGVARCHAR">' & chr(10);
-						break;
-					case "numeric":
-						dao &= 'NUMERIC">' & chr(10);
-						break;
-					case "real":
-						dao &= 'REAL">' & chr(10);
-						break;
-					case "smallint":
-						dao &= 'SMALLINT">' & chr(10);
-						break;
-					case "date":
-						dao &= 'DATE">' & chr(10);
-						break;
-					case "time":
-						dao &= 'TIME">' & chr(10);
-						break;
-					case "datetime": case "smalldatetime":
-						dao &= 'TIMESTAMP">' & chr(10);
-						break;
-					case "tinyint":
-						dao &= 'TINYINT">' & chr(10);
-						break;
-					case "varchar": case "nvarchar":
-						dao &= 'VARCHAR">' & chr(10);
-						break;
-					default:
-						dao &= 'VARCHAR">' & chr(10);
-						break;
-				}
-			}
-		}
-		dao &= chr(9) & chr(9) & chr(9) & '</cfquery>' & chr(10);
 
-		dao &= chr(9) & chr(9) & chr(9) & "<cfset msg.text = 'Record deleted successfully.'>" & chr(10);
-		dao &= chr(9) & chr(9) & chr(9) & "<cfset msg.type = 'success'>" & chr(10);
-		dao &= chr(9) & chr(9) & chr(9) & "<cfreturn msg>" & chr(10);
-		dao &= chr(9) & chr(9) & '<cfcatch type="any">' & chr(10);
-		dao &= chr(9) & chr(9) & chr(9) & "<cfset msg.text = 'An error has occurred. The record was not deleted'>" & chr(10);
-		dao &= chr(9) & chr(9) & chr(9) & "<cfset msg.type = 'error'>" & chr(10);
-		dao &= chr(9) & chr(9) & chr(9) & "<cfset msg.result = ##cfcatch##>" & chr(10);
-		dao &= chr(9) & chr(9) & chr(9) & "<cfreturn msg>" & chr(10);
-		dao &= chr(9) & chr(9) & "</cfcatch>" & chr(10);
-		dao &= chr(9) & chr(9) &  "</cftry>" & chr(10);
-		dao &= chr(9) & "</cffunction>" & chr(10) & chr(10);
 
-		// Create GUID
-		dao &= chr(9) & '<cffunction name="createSQLUUID" type="private" returnType="string" output="false">' & chr(10);
-		dao &= chr(9) & chr(9) & "<cfset var uuid = createUUID()>" & chr(10);
-		dao &= chr(9) & chr(9) & '<cfreturn left(uuid, 23) & "-" & right(uuid, 12)>' & chr(10);
-		dao &= chr(9) & "</cffunction>" & chr(10);
+
+
+
+
 
 		dao &= "</cfcomponent>";
 
