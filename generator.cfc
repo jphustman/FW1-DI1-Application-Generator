@@ -6,17 +6,19 @@ component {
 	// constructor
 	public any function init(required string dsn, required string siteTitle, string tables, string table) {
 
+		var i = 1;
+
 		// set arguments into the variables scope so they can be used throughout the cfc
 		variables.dsn = arguments.dsn;
 		variables.siteTitle = arguments.siteTitle;
 		if(structKeyExists(arguments, 'tables')) {
 			variables.tables = arguments.tables;
 		};
-		if(structKeyExists(arguments, 'table')) {
+		if (structKeyExists(arguments, 'table')) {
 			variables.table = arguments.table;
 			variables.tableColumns = getColumns(variables.table);
 
-			for(i=1;i<=variables.tableColumns.recordCount;i++) {
+			for(i; i <= variables.tableColumns.recordCount; i += 1) {
 				if(variables.tableColumns.Is_PrimaryKey[i] EQ true) {
 					var variables.pkField = variables.tableColumns.column_name[i];
 				}
@@ -69,13 +71,37 @@ component {
 		if (typeName EQ "number" || typeName EQ "float" ) {
 			var thisType = 'numeric';
 		} else if (typeName EQ "date") {
-			var thisType = 'date';
+			var thisType = 'any';
 		} else {
 			var thisType = 'string';
 		}
 
 		return thisType;
 	}
+
+	public any function defaultByType(required string typeName) {
+		if (typeName EQ "number" || typeName EQ "float" ) {
+			return 0;
+		}
+		return '""';
+	}
+
+
+	/**
+	 * Check if null based on type_name (stupid workaround for null)
+	 **/
+	public string function determineNullCheckNumeric(required string typeName) {
+		if (typeName == "NUMBER" || typeName == "FLOAT") {
+			return true;
+		}
+		return false;
+	}
+
+
+
+
+
+
 
 	public string function getPrimaryKey(required string tablename) {
 		var thisTableData = new dbinfo(datasource=variables.dsn, table=arguments.tablename).columns();
@@ -143,62 +169,62 @@ component {
 	// Default Layout Generator
 	public string function generateDefaultLayout() {
 		var retVar = '<!DOCTYPE html>' & chr(10);
-			retVar &=  '<html lang="en">' & chr(10);
-			retVar &=  '<head>' & chr(10);
-			retVar &=  chr(9) & '<meta charset="utf-8">' & chr(10);
-			retVar &=  chr(9) & '<meta name="viewport" content="width=device-width, initial-scale=1.0">' & chr(10);
-			retVar &=  chr(9) & '<title><cfoutput>##application.sitetitle##</cfoutput></title>' & chr(10) & chr(10);
+			retVar &= '<html lang="en">' & chr(10);
+			retVar &= '<head>' & chr(10);
+			retVar &= '	<meta charset="utf-8">' & chr(10);
+			retVar &= '	<meta name="viewport" content="width=device-width, initial-scale=1.0">' & chr(10);
+			retVar &= '	<title><cfoutput>##application.sitetitle##</cfoutput></title>' & chr(10) & chr(10);
 
-			retVar &=  chr(9) & '<script src="//code.jquery.com/jquery-1.10.2.js"></script>' & chr(10);
-			retVar &=  chr(9) & '<script src="//code.jquery.com/ui/1.11.0/jquery-ui.js"></script>' & chr(10);
-			retVar &=  chr(9) & '<script src="//ajax.aspnetcdn.com/ajax/jquery.validate/1.13.0/jquery.validate.js"></script>' & chr(10);
-			retVar &=  chr(9) & '<script src="//ajax.aspnetcdn.com/ajax/jquery.validate/1.13.0/additional-methods.min.js"></script>' & chr(10);
-			retVar &=  chr(9) & '<script src="//cdn.datatables.net/1.10.1/js/jquery.dataTables.min.js"></script>' & chr(10) & chr(10);
+			retVar &= '	<script src="//code.jquery.com/jquery-1.10.2.js"></script>' & chr(10);
+			retVar &= '	<script src="//code.jquery.com/ui/1.11.0/jquery-ui.js"></script>' & chr(10);
+			retVar &= '	<script src="//ajax.aspnetcdn.com/ajax/jquery.validate/1.13.0/jquery.validate.js"></script>' & chr(10);
+			retVar &= '	<script src="//ajax.aspnetcdn.com/ajax/jquery.validate/1.13.0/additional-methods.min.js"></script>' & chr(10);
+			retVar &= '	<script src="//cdn.datatables.net/1.10.1/js/jquery.dataTables.min.js"></script>' & chr(10) & chr(10);
 
-			retVar &=  chr(9) & '<link href="//ajax.aspnetcdn.com/ajax/jquery.ui/1.10.1/themes/redmond/jquery-ui.min.css" rel="stylesheet" />' & chr(10);
-			retVar &=  chr(9) & '<link href="css/demo_table_jui.css" rel="stylesheet" />' & chr(10);
-			retVar &=  chr(9) & '<link href="//maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" />' & chr(10) & chr(10);
+			retVar &= '	<link href="//ajax.aspnetcdn.com/ajax/jquery.ui/1.10.1/themes/redmond/jquery-ui.min.css" rel="stylesheet" />' & chr(10);
+			retVar &= '	<link href="css/demo_table_jui.css" rel="stylesheet" />' & chr(10);
+			retVar &= '	<link href="//maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet" />' & chr(10) & chr(10);
 
-			retVar &=  chr(9) & '<link href="http://yui.yahooapis.com/pure/0.5.0/pure-min.css" rel="stylesheet" />' & chr(10) & chr(10);
+			retVar &= '	<link href="http://yui.yahooapis.com/pure/0.5.0/pure-min.css" rel="stylesheet" />' & chr(10) & chr(10);
 
- 			retVar &=  chr(9) & '<!--[if lte IE 8]>' & chr(10);
-			retVar &=  chr(9) & chr(9) & '<link rel="stylesheet" href="css/layouts/side-menu-old-ie.css">' & chr(10);
-			retVar &=  chr(9) & '<![endif]-->' & chr(10);
-			retVar &=  chr(9) & '<!--[if gt IE 8]><!-->' & chr(10);
-			retVar &=  chr(9) & chr(9) & '<link rel="stylesheet" href="css/layouts/side-menu.css">' & chr(10);
- 			retVar &=  chr(9) & '<!--<![endif]-->' & chr(10);
-			retVar &=  chr(9) & chr(9) & '<link rel="stylesheet" href="css/styles.css">' & chr(10);
+ 			retVar &= '	<!--[if lte IE 8]>' & chr(10);
+			retVar &= '		<link rel="stylesheet" href="css/layouts/side-menu-old-ie.css">' & chr(10);
+			retVar &= '	<![endif]-->' & chr(10);
+			retVar &= '	<!--[if gt IE 8]><!-->' & chr(10);
+			retVar &= '		<link rel="stylesheet" href="css/layouts/side-menu.css">' & chr(10);
+ 			retVar &= '	<!--<![endif]-->' & chr(10);
+			retVar &= '		<link rel="stylesheet" href="css/styles.css">' & chr(10);
 			retVar &= '</head>' & chr(10) & chr(10);
 
 			retVar &= '<body>' & chr(10);
-			retVar &=  chr(9) & '<div id="layout">' & chr(10);
-			retVar &=  chr(9) & chr(9) & '<!-- Menu toggle -->' & chr(10);
-			retVar &=  chr(9) & chr(9) & '<a href="##menu" id="menuLink" class="menu-link">' & chr(10);
-			retVar &=  chr(9) & chr(9) & chr(9) & '<!-- Hamburger icon -->' & chr(10);
-			retVar &=  chr(9) & chr(9) & chr(9) & '<span></span>' & chr(10);
-			retVar &=  chr(9) & chr(9) & '</a>' & chr(10) & chr(10);
+			retVar &= '	<div id="layout">' & chr(10);
+			retVar &= '		<!-- Menu toggle -->' & chr(10);
+			retVar &= '		<a href="##menu" id="menuLink" class="menu-link">' & chr(10);
+			retVar &= '			<!-- Hamburger icon -->' & chr(10);
+			retVar &= '			<span></span>' & chr(10);
+			retVar &= '		</a>' & chr(10) & chr(10);
 
-			retVar &=  chr(9) & chr(9) & '<div id="menu">' & chr(10);
-			retVar &=  chr(9) & chr(9) & chr(9) & '<div class="pure-menu pure-menu-open">' & chr(10);
-			retVar &=  chr(9) & chr(9) & chr(9) & chr(9) & '<cfoutput><a class="pure-menu-heading" href="##buildURL(#variables.apos#main.home#variables.apos#)##">##application.sitetitle##</a></cfoutput>' & chr(10) & chr(10);
+			retVar &= '		<div id="menu">' & chr(10);
+			retVar &= '			<div class="pure-menu pure-menu-open">' & chr(10);
+			retVar &= '				<cfoutput><a class="pure-menu-heading" href="##buildURL(#variables.apos#main.home#variables.apos#)##">##application.sitetitle##</a></cfoutput>' & chr(10) & chr(10);
 
-			retVar &=  chr(9) & chr(9) & chr(9) & chr(9) & '<ul>' & chr(10);
-			retVar &=  chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & '<cfoutput>' & chr(10);
-			retVar &=  chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & '<li><a href="##buildURL(#variables.apos#main.home#variables.apos#)##">Home</a></li>' & chr(10);
+			retVar &= '				<ul>' & chr(10);
+			retVar &= '					<cfoutput>' & chr(10);
+			retVar &= '					<li><a href="##buildURL(#variables.apos#main.home#variables.apos#)##">Home</a></li>' & chr(10);
 
 			for(i=1;i<=listlen(variables.tables);i++) {
-				retVar &=  chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & '<li><a href="##buildURL(#variables.apos##listgetat(variables.tables,i)#.home#variables.apos#)##">#capitalizeString(listgetat(variables.tables,i))#</a></li>' & chr(10);
+				retVar &= '					<li><a href="##buildURL(#variables.apos##listgetat(variables.tables,i)#.home#variables.apos#)##">#capitalizeString(listgetat(variables.tables,i))#</a></li>' & chr(10);
 			}
 
-			retVar &=  chr(9) & chr(9) & chr(9) & chr(9) & chr(9) & '</cfoutput>' & chr(10);
-			retVar &=  chr(9) & chr(9) & chr(9) & chr(9) & '</ul>' & chr(10);
-			retVar &=  chr(9) & chr(9) & chr(9) & '</div>' & chr(10);
-			retVar &=  chr(9) & chr(9) & '</div>' & chr(10) & chr(10);
+			retVar &= '					</cfoutput>' & chr(10);
+			retVar &= '				</ul>' & chr(10);
+			retVar &= '			</div>' & chr(10);
+			retVar &= '		</div>' & chr(10) & chr(10);
 
-			retVar &=  chr(9) & chr(9) & '<div id="main">' & chr(10);
-			retVar &=  chr(9) & chr(9) & '<cfoutput>##body##</cfoutput>' & chr(10);
-			retVar &=  chr(9) & chr(9) & '</div>' & chr(10);
-			retVar &=  chr(9) & '</div>' & chr(10);
+			retVar &= '		<div id="main">' & chr(10);
+			retVar &= '		<cfoutput>##body##</cfoutput>' & chr(10);
+			retVar &= '		</div>' & chr(10);
+			retVar &= '	</div>' & chr(10);
 			retVar &= '</body>' & chr(10);
 			retVar &= '</html>';
 
@@ -209,25 +235,53 @@ component {
 	public string function generateBean() {
 		var argIsNumber = false;
 		var qColumns = getColumns(variables.table);
-		var bean = chr(10) & 'component accessors="true" output="false" {' & chr(10) & chr(10);
+		var bean = 'component accessors="true" output="false" {' & chr(10) & chr(10);
 		for (i = 1; i <= qColumns.recordCount; i += 1) {
-			bean &= chr(9) & 'property name="#LCase(qColumns.column_name[i])#";' & chr(10);
+			if (qColumns.is_nullable[i]) { // prevent type problems if value is null and its supposed to be numeric for example.
+				bean &= '	property name="#LCase(qColumns.column_name[i])#" type="string" default="";' & chr(10);
+			} else {
+				bean &= '	property name="#LCase(qColumns.column_name[i])#" type="#argumentColumnType(qColumns.type_name[i])#" default=#defaultByType(qColumns.type_name[i])#;' & chr(10);
+			}
 		}
-		bean &= chr(10) & chr(9) & 'public any function init(' & chr(10);
+		bean &= chr(10) & '	// Pseudo-constructor' & chr(10);
+		bean &= '	variables.instance = {' &chr(10);
 		for (i = 1; i <= qColumns.recordCount; i += 1) {
-			bean &= chr(9) & chr(9) & chr(9) & LCase(qColumns.column_name[i]) & ' = ""';
+			if (qColumns.is_nullable[i]) { // prevent type problems if value is null and its supposed to be numeric for example.
+				bean &= '		#LCase(qColumns.column_name[i])# = ""';
+			} else {
+				bean &= '		#LCase(qColumns.column_name[i])# = #defaultByType(qColumns.type_name[i])#';
+			}
 			if (i != qColumns.recordCount) {
 				bean &= ',';
 			}
 			bean &= chr(10);
 		}
-		bean &= chr(9) & chr(9) & ') {' & chr(10);
+		bean &= '	};' & chr(10) & chr(10);
+		bean &= '	public #capitalizeString(variables.table)# function init(' & chr(10);
+		for (i = 1; i <= qColumns.recordCount; i += 1) {
+			if (qColumns.is_nullable[i]) { // prevent type problems if value is null and its supposed to be numeric for example.
+				bean &= '			required string #LCase(qColumns.column_name[i])# = ""';
+			} else {
+				bean &= '			required #argumentColumnType(qColumns.type_name[i])# #LCase(qColumns.column_name[i])# = #defaultByType(qColumns.type_name[i])#';
+			}
+			if (i != qColumns.recordCount) {
+				bean &= ',';
+			}
+			bean &= chr(10);
+		}
+		bean &= '		) {' & chr(10);
 		bean &= chr(10);
 		for (i = 1; i <= qColumns.recordCount; i += 1) {
-			bean &= chr(9) & chr(9) & 'variables.' & LCase(qColumns.column_name[i]) & ' = arguments.' & LCase(qColumns.column_name[i]) & ';' & chr(10);
+			bean &= '		variables.' & LCase(qColumns.column_name[i]) & ' = arguments.' & LCase(qColumns.column_name[i]) & ';' & chr(10);
 		}
 		bean &= chr(10);
-		bean &= chr(9) & chr(9) & 'return this;' & chr(10) & chr(9) & '}' & chr(10) & '}';
+		bean &= '		return this;' & chr(10);
+		bean &= '	}' & chr(10) & chr(10);
+		bean &= '}';
+
+		var beanFile = expandPath("./cfout/beans/#capitalizeString(variables.table)#.cfc");
+		FileWrite(beanFile, bean);
+
 
 		return bean;
 
@@ -351,7 +405,6 @@ component {
 // Service Tag Generator
 ///////////////////////////////////////////////////////////////////////////////
 	public string function generateTagService() {
-		var dao = variables.table & "DAO";
 		var qColumns = getColumns(variables.table);
 
 		var service = '<cfcomponent displayName="#capitalizeString(variables.table)#Service" output="false"' & chr(10);
@@ -502,6 +555,9 @@ component {
 
 		/*service &= '</cffunction>';*/
 
+		var serviceFile = expandPath("./cfout/services/#capitalizeString(variables.table)#.cfc");
+		FileWrite(serviceFile, service);
+
 		return service;
 
 	}
@@ -592,11 +648,11 @@ component {
 		gateway &= '			SELECT' & chr(10);
 
 		for(i=1;i<=variables.tableColumns.recordCount;i++) {
-			if (i == 1) {
-				gateway &= '				#variables.tableColumns.column_name[i]#' & chr(10);
-			} else {
-				gateway &= '				,#variables.tableColumns.column_name[i]#' & chr(10);
+			gateway &= '				#variables.tableColumns.column_name[i]#';
+			if (i != variables.tableColumns.recordCount) {
+				gateway &= ',';
 			}
+			gateway &= chr(10);
 		}
 		gateway &= '			FROM #variables.table#' & chr(10);
 		gateway &= '		</cfquery>' & chr(10);
@@ -612,8 +668,8 @@ component {
 			gateway &= '			hint="I am the #LCase(variables.tableColumns.column_name[i])# to search for.">' & chr(10) & chr(10);
 			gateway &= '			<!--- Create and populate a structure object containing the filter to pass through. --->' & chr(10);
 			gateway &= '			<cfset var stuFilter = {' & chr(10);
-				gateway &= '				#LCase(variables.tableColumns.column_name[i])# = arguments.#LCase(variables.tableColumns.column_name[i])#' & chr(10);
-				gateway &= '			}>' & chr(10) & chr(10);
+			gateway &= '				#LCase(variables.tableColumns.column_name[i])# = arguments.#LCase(variables.tableColumns.column_name[i])#' & chr(10);
+			gateway &= '			}>' & chr(10) & chr(10);
 			gateway &= '		<!--- Send the structure into the query method and return the query object. --->' & chr(10);
 			gateway &= '		<cfreturn filterAll#capitalizeString(variables.table)#(stuFilter)>' & chr(10);
 			gateway &= '	</cffunction>' & chr(10) & chr(10);
@@ -632,12 +688,11 @@ component {
          gateway &= '		<cfquery name="qSearch">' & chr(10);
 		 gateway &= '			SELECT' & chr(10);
 		 for(i=1;i<=variables.tableColumns.recordCount;i++) {
-			 if (i == 1) {
-				 // First variable, no comma.
-				 gateway &= '				#variables.tableColumns.column_name[i]#' & chr(10);
-			 } else {
-				 gateway &= '				,#variables.tableColumns.column_name[i]#' & chr(10);
-			 }
+			 gateway &= '				#variables.tableColumns.column_name[i]#';
+			if (i != variables.tableColumns.recordCount) {
+				gateway &= ',';
+			}
+			gateway &= chr(10);
 		 }
 		 gateway &= '			FROM #variables.table#' & chr(10);
 
@@ -668,6 +723,9 @@ component {
 
 		 gateway &= '</cfcomponent>' & chr(10);
 
+		var gatewayFile = expandPath("./cfout/gateway/#capitalizeString(variables.table)#.cfc");
+		FileWrite(gatewayFile, gateway);
+
 		 return gateway;
 
 	}
@@ -679,7 +737,7 @@ component {
 ///////////////////////////////////////////////////////////////////////////////
 	public string function generateTagDAO() {
 		var dao = '<cfcomponent accessors="true" output="false" extends="model.services.CoreUtils"' & chr(10);
-		dao &= '	hint="I am the #capitalizeString(variables.table)#Dao Class.">' & chr(10) & chr(10);
+		dao &= '			hint="I am the #capitalizeString(variables.table)#Dao Class.">' & chr(10) & chr(10);
 
 		dao &= '	<cfset init()>' & chr(10) & chr(10);
 
@@ -690,15 +748,15 @@ component {
 		dao &= '	</cffunction>' & chr(10) & chr(10);
 
 		//Get Bean by Id
-		dao &= '	<cffunction name="get#capitalizeString(variables.table)#ById" access="public" output="false" returnType="any"' & chr(10);
+		dao &= '	<cffunction name="get#capitalizeString(variables.table)#" access="public" output="false" returnType="boolean"' & chr(10);
 		dao &= '			hint="I return the #capitalizeString(variables.table)# bean populated with details of a specific #capitalizeString(variables.table)#.">' & chr(10) ;
 
-		dao &= '		<cfargument name="#capitalizeString(variables.table)#Id" required="true" type="numeric">' & chr(10) & chr(10);
+		dao &= '		<cfargument name="#LCase(variables.table)#" required="true" type="#capitalizeString(variables.table)#">' & chr(10) & chr(10);
 
 		dao &= "		<cfset var qSearch = new query()>" & chr(10);
 		dao &= "		<cfset var obj#capitalizeString(variables.table)# = {}>" & chr(10);
 		dao &= '		<cfquery name="qSearch">' & chr(10);
-		dao &= "			SELECT" & chr(10);
+		dao &= '			SELECT' & chr(10);
 
 /*
 		if (hasForeignKey(#variables.table#)) {
@@ -727,32 +785,32 @@ component {
 		} else {
 */
 
-			for (i = 1; i <= variables.tableColumns.recordCount; i += 1) {
-				if (i == 1) {
-					dao &= "					  #variables.tableColumns.column_name[i]#" & chr(10);
-				} else {
-					dao &= "					, #variables.tableColumns.column_name[i]#" & chr(10);
-				}
+		for (i = 1; i <= variables.tableColumns.recordCount; i += 1) {
+			dao &= '				#variables.tableColumns.column_name[i]#';
+			if (i != variables.tableColumns.recordCount) {
+				dao &= ',';
 			}
-			dao &= '				FROM #variables.table#' & chr(10);
-			dao &= '				WHERE #variables.pkField# = <cfqueryparam value="###capitalizeString(variables.table)#Id##" cfsqltype="CF_SQL_FLOAT">' & chr(10);
+			dao &= chr(10);
+		}
+		dao &= '			FROM #variables.table#' & chr(10);
+		dao &= '			WHERE #variables.pkField# = <cfqueryparam value="##arguments.#LCase(variables.table)#.get#capitalizeString(variables.table)#ID##" cfsqltype="CF_SQL_FLOAT">' & chr(10);
 
 		/* } */
 
-		dao &= '			</cfquery>' & chr(10) & chr(10);
+		dao &= '		</cfquery>' & chr(10) & chr(10);
 
-		dao &= '			<cfif qSearch.recordCount>' & chr(10);
-		dao &= '				<!--- If a record has been returned for the #capitalizeString(variables.table)#Id, create an instance of the #capitalizeString(variables.table)# bean and return it. --->' & chr(10);
-		dao &= '				<cfset obj#capitalizeString(variables.table)# = new model.beans.#capitalizeString(variables.table)#().init(' & chr(10);
+		dao &= '		<cfif qSearch.recordCount>' & chr(10);
+		dao &= '			<!--- If a record has been returned for the #capitalizeString(variables.table)#Id, create an instance of the #capitalizeString(variables.table)# bean and return it. --->' & chr(10);
+		dao &= '			<cfset arguments.#LCase(variables.table)#.init(' & chr(10);
 		for (i = 1; i <= variables.tableColumns.recordCount; i += 1) {
-			if (i == 1) {
-		dao &= '					  #LCase(variables.tableColumns.column_name[i])# = qSearch.#variables.tableColumns.column_name[i]#' & chr(10);
-			} else {
-		dao &= '					, #LCase(variables.tableColumns.column_name[i])# = qSearch.#variables.tableColumns.column_name[i]#' & chr(10);
+			dao &= '				#LCase(variables.tableColumns.column_name[i])# = qSearch.#variables.tableColumns.column_name[i]#';
+			if (i != variables.tableColumns.recordCount) {
+				dao &= ',';
 			}
+			dao &= chr(10);
 		}
-		dao &= '				)>' & chr(10);
-		dao &= '			</cfif>' & chr(10);
+		dao &= '			)>' & chr(10);
+		dao &= '		</cfif>' & chr(10);
 		dao &= '		<cfreturn obj#variables.table#>' & chr(10);
 		dao &= '	</cffunction>' & chr(10) & chr(10);
 
@@ -794,47 +852,56 @@ component {
 
 		dao &= '	<cffunction name="update#capitalizeString(variables.table)#" access="public" output="false" returnType="boolean"' & chr(10);
 		dao &= '			hint="I update a #capitalizeString(variables.table)#s details">' & chr(10);
-		dao &= '			<cfargument name="#LCase(variables.table)#" required="true" type="model.beans.#capitalizeString(variables.table)#" hint="I am the #capitalizeString(variables.table)# bean.">' & chr(10) & chr(10);
+		dao &= '			<cfargument name="#LCase(variables.table)#" required="true" type="#capitalizeString(variables.table)#" hint="I am the #capitalizeString(variables.table)# bean.">' & chr(10) & chr(10);
 
 		dao &= '			<cfset var qUpdate = new Query()>' & chr(10);
-		dao &= '			<cfset var boolSuccess = true>' & chr(10);
-		dao &= '			<cftry>' & chr(10);
-		dao &= '				<cfquery name="qUpdate">' & chr(10);
-		dao &= '					Update #variables.table#' & chr(10);
-		dao &= '					SET' & chr(10);
+
+		dao &= '			<cftransaction action="begin">' & chr(10) & chr(10);
+
+		dao &= '				<cftry>' & chr(10) & chr(10);
+
+		dao &= '					<cfquery name="qUpdate">' & chr(10);
+		dao &= '						UPDATE #variables.table#' & chr(10);
+		dao &= '						SET' & chr(10);
 		for (i = 1; i <= variables.tableColumns.recordCount; i += 1) {
 			var queryParamType = queryParamColumnType(variables.tableColumns.type_name[i]);
 
-			if (i == 1) {
-				if (variables.tableColumns.is_nullable[i]) {
-					dao &= '						<cfif len(##arguments.#LCase(variables.table)#.get#capitalizeString(variables.tableColumns.column_name[i])#()##)>' & chr(10);
-					dao &= '							#variables.tableColumns.column_name[i]# = <cfqueryparam value="##arguments.#LCase(variables.table)#.get#capitalizeString(variables.tableColumns.column_name[i])#()##" cfsqltype="cf_sql_#queryParamType#" />' & chr(10);
-					dao &= '						<cfelse>' & chr(10);
-					dao &= '							#variables.tableColumns.column_name[i]# = <cfqueryparam null="true">' & chr(10);
-					dao &= '						</cfif>' & chr(10);
+			if (variables.tableColumns.is_nullable[i]) {
+				if (determineNullCheckNumeric(variables.tableColumns.type_name[i])) {
+					dao &= '							<cfif ##arguments.#LCase(variables.table)#.get#capitalizeString(variables.tableColumns.column_name[i])#()##>' & chr(10);
 				} else {
-					dao &= '						#variables.tableColumns.column_name[i]# = <cfqueryparam value="##arguments.#LCase(variables.table)#.get#capitalizeString(variables.tableColumns.column_name[i])#()##" cfsqltype="cf_sql_#queryParamType#" />' & chr(10);
+					dao &= '							<cfif len(##arguments.#LCase(variables.table)#.get#capitalizeString(variables.tableColumns.column_name[i])#()##)>' & chr(10);
 				}
+				dao &= '								#variables.tableColumns.column_name[i]# = <cfqueryparam value="##arguments.#LCase(variables.table)#.get#capitalizeString(variables.tableColumns.column_name[i])#()##" cfsqltype="cf_sql_#queryParamType#" />';
+			if (i != variables.tableColumns.recordCount) {
+				dao &= ',';
+			}
+			dao &= chr(10);
+				dao &= '							<cfelse>' & chr(10);
+				dao &= '								#variables.tableColumns.column_name[i]# = <cfqueryparam null="true">';
+				if (i != variables.tableColumns.recordCount) {
+					dao &= ',';
+				}
+				dao &= chr(10);
+				dao &= '							</cfif>' & chr(10);
 			} else {
-				if (variables.tableColumns.is_nullable[i]) {
-					dao &= '						<cfif len(##arguments.#LCase(variables.table)#.get#capitalizeString(variables.tableColumns.column_name[i])#()##)>' & chr(10);
-					dao &= '							, #variables.tableColumns.column_name[i]# = <cfqueryparam value="##arguments.#LCase(variables.table)#.get#capitalizeString(variables.tableColumns.column_name[i])#()##" cfsqltype="cf_sql_#queryParamType#" />' & chr(10);
-					dao &= '						<cfelse>' & chr(10);
-					dao &= '							, #variables.tableColumns.column_name[i]# = <cfqueryparam null="true">' & chr(10);
-					dao &= '						</cfif>' & chr(10);
-				} else {
-					dao &= '						, #variables.tableColumns.column_name[i]# = <cfqueryparam value="##arguments.#LCase(variables.table)#.get#capitalizeString(variables.tableColumns.column_name[i])#()##" cfsqltype="cf_sql_#queryParamType#" />' & chr(10);
+				dao &= '							#variables.tableColumns.column_name[i]# = <cfqueryparam value="##arguments.#LCase(variables.table)#.get#capitalizeString(variables.tableColumns.column_name[i])#()##" cfsqltype="cf_sql_#queryParamType#" />';
+				if (i != variables.tableColumns.recordCount) {
+					dao &= ',';
 				}
+				dao &= chr(10);
 			}
 		}
-		dao &= '					WHERE ID = <cfqueryparam value="##arguments.#LCase(variables.table)#.getId()##" cfsqltype="cf_sql_float" />' & chr(10);
-		dao &= '				</cfquery>' & chr(10);
-		dao &= '				<cfcatch type="database">' & chr(10);
-		dao &= '					<cfset boolSuccess = false>' & chr(10);
-		dao &= '				</cfcatch>' & chr(10);
-		dao &= '			</cftry>' & chr(10);
+		dao &= '						WHERE ID = <cfqueryparam value="##arguments.#LCase(variables.table)#.getId()##" cfsqltype="cf_sql_float" />' & chr(10);
+		dao &= '					</cfquery>' & chr(10);
+		dao &= '					<cfcatch type="database">' & chr(10);
+		dao &= '						<cftransaction action="rollback" />' & chr(10);
+		dao &= '						<cfreturn false />' & chr(10);
+		dao &= '					</cfcatch>' & chr(10);
+		dao &= '				</cftry>' & chr(10);
+		dao &= '			</cftransaction>' & chr(10);
 
-		dao &= '		<cfreturn boolSuccess>' & chr(10);
+		dao &= '		<cfreturn true>' & chr(10);
 		dao &= '	</cffunction>' & chr(10) & chr(10);
 
 
@@ -865,54 +932,78 @@ component {
 
 		dao &= '		<cfset var qInsert = new Query()>' & chr(10);
 		dao &= '		<cfset var insertResult = 0>' & chr(10) & chr(10);
-		dao &= '		<cfquery name="qInsert" result="insertResult">' & chr(10);
-		dao &= '			INSERT' & chr(10);
-		dao &= '			INTO #variables.table#' & chr(10);
-		dao &= '			(' & chr(10);
+
+		dao &= '		<cftransaction action="begin">' & chr(10);
+		dao &= '			<cftry>' & chr(10);
+		dao &= '				<cfquery name="qInsert" result="insertResult">' & chr(10);
+		dao &= '					INSERT' & chr(10);
+		dao &= '					INTO #variables.table#' & chr(10);
+		dao &= '					(' & chr(10);
 
 		for (i = 1; i <= variables.tableColumns.recordCount; i += 1) {
 			if (i == 1) {
-				dao &= "					  #variables.tableColumns.column_name[i]#" & chr(10);
+				dao &= '							#variables.tableColumns.column_name[i]#';
 			} else {
-				dao &= "					, #variables.tableColumns.column_name[i]#" & chr(10);
+				dao &= '							#variables.tableColumns.column_name[i]#';
 			}
+			if (i != variables.tableColumns.recordCount) {
+				dao &= ',';
+			}
+			dao &= chr(10);
 		}
 
-		dao &= '			) VALUES (' & chr(10);
+		dao &= '					) VALUES (' & chr(10);
 
 		for (i = 1; i <= variables.tableColumns.recordCount; i += 1) {
 			var queryParamType = queryParamColumnType(variables.tableColumns.type_name[i]);
 
-			if (i == 1) {
-				if (variables.tableColumns.is_nullable[i]) {
-					dao &= '				<cfif len(##arguments.#LCase(variables.table)#.get#capitalizeString(variables.tableColumns.column_name[i])#()##)>' & chr(10);
-					dao &= '					<cfqueryparam value="##arguments.#LCase(variables.table)#.get#capitalizeString(variables.tableColumns.column_name[i])#()##" cfsqltype="cf_sql_#queryParamType#" />' & chr(10);
-					dao &= '				<cfelse>' & chr(10);
-					dao &= '					<cfqueryparam null="true">' & chr(10);
-					dao &= '				</cfif>' & chr(10);
-				} else {
-					dao &= '				<cfqueryparam value="##arguments.#LCase(variables.table)#.get#capitalizeString(variables.tableColumns.column_name[i])#()##" cfsqltype="cf_sql_#queryParamType#" />' & chr(10);
+			if (variables.tableColumns.is_nullable[i]) {
+				/*if (determineNullCheckNumeric(variables.tableColumns.type_name[i])) {*/
+					dao &= '						<cfif len(trim(##arguments.#LCase(variables.table)#.get#capitalizeString(variables.tableColumns.column_name[i])#()##))>' & chr(10);
+				/*} else {*/
+					/*dao &= '						<cfif len(##arguments.#LCase(variables.table)#.get#capitalizeString(variables.tableColumns.column_name[i])#()##)>' & chr(10);*/
+				/*}*/
+				dao &= '							<cfqueryparam value="##arguments.#LCase(variables.table)#.get#capitalizeString(variables.tableColumns.column_name[i])#()##" cfsqltype="cf_sql_#queryParamType#" />';
+				if (i != variables.tableColumns.recordCount) {
+					dao &= ',';
 				}
+				dao &= chr(10);
+				dao &= '						<cfelse>' & chr(10);
+				dao &= '							<cfqueryparam null="true">';
+				if (i != variables.tableColumns.recordCount) {
+					dao &= ',';
+				}
+				dao &= chr(10);
+				dao &= '						</cfif>' & chr(10);
 			} else {
-				if (variables.tableColumns.is_nullable[i]) {
-					dao &= '				<cfif len(##arguments.#LCase(variables.table)#.get#capitalizeString(variables.tableColumns.column_name[i])#()##)>' & chr(10);
-					dao &= '					, <cfqueryparam value="##arguments.#LCase(variables.table)#.get#capitalizeString(variables.tableColumns.column_name[i])#()##" cfsqltype="cf_sql_#queryParamType#" />' & chr(10);
-					dao &= '				<cfelse>' & chr(10);
-					dao &= '					, <cfqueryparam null="true">' & chr(10);
-					dao &= '				</cfif>' & chr(10);
-				} else {
-					dao &= '				, <cfqueryparam value="##arguments.#LCase(variables.table)#.get#capitalizeString(variables.tableColumns.column_name[i])#()##" cfsqltype="cf_sql_#queryParamType#" />' & chr(10);
+				dao &= '						<cfqueryparam value="##arguments.#LCase(variables.table)#.get#capitalizeString(variables.tableColumns.column_name[i])#()##" cfsqltype="cf_sql_#queryParamType#" />';
+				if (i != variables.tableColumns.recordCount) {
+					dao &= ',';
 				}
+				dao &= chr(10);
 			}
 		}
 
-		dao &= '			)' & chr(10);
-		dao &= '		</cfquery>' & chr(10) & chr(10);
+		dao &= '					)' & chr(10);
+		dao &= '				</cfquery>' & chr(10) & chr(10);
+		dao &= '				<cfcatch type="database">' & chr(10);
+		dao &= '					<cftransaction action="rollback" />' & chr(10);
+		dao &= '					<cfreturn false />' & chr(10);
+		dao &= '				</cfcatch>' & chr(10);
+		dao &= '			</cftry>' & chr(10);
+		dao &= '		</cftransaction>' & chr(10) & chr(10);
 
+		dao &= '		<cfreturn true>' & chr(10);
+
+		/*
 		dao &= '		<cfreturn getIdFromRowid(insertResult.ROWID, "#getPrimaryKey(variables.table)#", "#variables.table#")>' & chr(10);
+		*/
 		dao &= '	</cffunction>' & chr(10) & chr(10);
 
-		dao &= "</cfcomponent>";
+		dao &= '</cfcomponent>';
+
+		var daoFile = expandPath("./cfout/dao/#capitalizeString(variables.table)#.cfc");
+		FileWrite(daoFile, dao);
 
 		return dao;
 	}

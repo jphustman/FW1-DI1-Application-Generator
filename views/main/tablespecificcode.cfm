@@ -92,6 +92,7 @@
 					</div>
 
 					<div id="tabs-service">
+						<!--
 						<cfset getService = generator.generateService()>
 						<cfoutput>
 							<span style="color:##000099; font-weight:bold;">
@@ -100,6 +101,7 @@
 							<textarea style="font-size: 8pt; width: 100%;"
 								wrap="hard" rows="33" name="linkNode">#getService#</textarea>
 						</cfoutput>
+						-->
 						<cfset getService = generator.generateTagService()>
 						<cfoutput>
 							<span style="color:##000099; font-weight:bold;">
@@ -111,6 +113,7 @@
 					</div>
 
 					<div id="tabs-dao">
+						<!--
 						<cfset getDAO = generator.generateDAO()>
 						<cfoutput>
 							<span style="color:##000099; font-weight:bold;">
@@ -119,6 +122,7 @@
 							<textarea style="font-size: 8pt; width: 100%;"
 								wrap="hard" rows="33" name="linkNode">#getDAO#</textarea>
 						</cfoutput>
+						-->
 
 						<cfset getDAO = generator.generateTagDAO()>
 						<cfoutput>
